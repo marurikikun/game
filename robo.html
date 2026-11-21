@@ -94,7 +94,7 @@ ol.how li{margin-bottom:5px} ol.how b{color:var(--acc)}
       <li>道が<b>赤く点滅</b>したら空爆がきます。すぐ横へにげて！ 紫の<b>砲台ロボ</b>やボスの赤い玉もよけます。</li>
       <li><b>赤い円</b>が出たらミサイルが落ちます。橋の塔、外を飛ぶドローン、爆撃機が撃ってきます。円の外へ！</li>
       <li>光る<b>アイテム</b>は取りにいこう（⚡連射・ボム）。</li>
-      <li><b>数字（5・4・3…）が出ている物は、0になる前に指でタッチ</b>：緑の箱は仲間が回復。赤い爆弾は敵の群れやボスの部位にくっついて出ます（2〜3秒）。</li>
+      <li><b>数字（5・4・3…）が出ている物は、0になる前に指でタッチ</b>：緑の箱は<b>3回タッチ</b>すると開いて仲間が回復。赤い爆弾は<b>3個1組</b>で、敵の群れやボスの部位のまわりに出ます。<b>時間内に3個ぜんぶタッチ</b>すると大爆発（約3秒）。1個でも残すと不発です。</li>
       <li>敵を倒すと<b>必殺</b>がたまります。100%でボタンを押すと<b>メガレーザー</b>！</li>
       <li>途中に<b>中ボス</b>、最後に<b>ステージボス</b>（双子・ムカデ・空中戦艦・巨大要塞）。<b>うで・あし・エンジンをこわす</b>と攻撃がへり、<b>光る弱点</b>に弾がよく効くようになります。</li>
       <li>仲間が<b>50体</b>で<b>合体</b>、<b>100体</b>で<b>超合体</b>。金色の太い弾を撃ちます。</li>
@@ -517,12 +517,22 @@ function spawnTap(type,x,y,z,life,opt){
   var ring=new THREE.Mesh(new THREE.RingGeometry(1.5,1.85,36),new THREE.MeshBasicMaterial({color:type==='heal'?0x5dff8a:0xffd23a,transparent:true,opacity:0.85,side:THREE.DoubleSide,depthWrite:false,fog:false,toneMapped:false}));
   var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:digitTex(Math.ceil(life),type),transparent:true,depthTest:false,fog:false})); sp.scale.set(2.3,2.3,1); sp.renderOrder=11;
   scene.add(grp); scene.add(ring); scene.add(sp);
-  taps.push({type:type,x:x,y:y,z:z,grp:grp,ring:ring,sp:sp,life:life,max:life,n:Math.ceil(life),part:opt.part||null,mid:!!opt.mid,move:!!opt.move,done:false});
+  taps.push({type:type,x:x,y:y,z:z,grp:grp,ring:ring,sp:sp,life:life,max:life,n:Math.ceil(life),part:opt.part||null,mid:!!opt.mid,move:!!opt.move,done:false,need:type==='heal'?3:1,g:opt.g||null,ox:opt.ox||0,lit:false,pop:0});
   glow(x,y,z,7,type==='heal'?0x5dff8a:0xffd23a,0.3);
 }
+/* 爆弾は3個1組。時間内に3個ぜんぶタッチすると爆発する */
+function spawnBombSet(x,y,z,life,opt,sp){ var g={n:3,lit:0,part:opt.part||null,mid:!!opt.mid}, offs=[[-sp,0],[0,sp*0.55],[sp,0]], q; for(q=0;q<3;q++)spawnTap('bomb',x+offs[q][0],y+offs[q][1],z,life,{part:opt.part,mid:opt.mid,move:opt.move,g:g,ox:offs[q][0]}); }
 function removeTap(tp){ scene.remove(tp.grp); scene.remove(tp.ring); scene.remove(tp.sp); }
 function useTap(tp){
-  if(tp.done)return; tp.done=true;
+  if(tp.done||tp.lit)return;
+  /* 回復の箱は3回タッチ（連打）で開く */
+  if(tp.type==='heal'&&tp.need>1){ tp.need--; tp.pop=0.25; burst(tp.x,tp.y,tp.z,0x5dff8a,8,6,0.8); if(!S.auto)tone(520+(3-tp.need)*180,0.08,'square',0.06); toast('あと '+tp.need+' 回！'); return; }
+  /* 爆弾は1個ずつ点火。3個そろったら、まん中で爆発 */
+  if(tp.g){ var g=tp.g; tp.lit=true; g.lit++; tp.pop=0.25; tp.ring.material.color.setHex(0x5dff8a); burst(tp.x,tp.y,tp.z,0xffd23a,8,6,0.8); if(!S.auto)tone(440+g.lit*200,0.08,'square',0.06);
+    if(g.lit<g.n){ toast('爆弾 '+g.lit+' / '+g.n); return; }
+    var cx=0,cy=0,cz=0,cm=0,k; for(k=0;k<taps.length;k++){ if(taps[k].g===g){ taps[k].done=true; cx+=taps[k].x; cy+=taps[k].y; cz+=taps[k].z; cm++; } }
+    tp={type:'bomb',x:cx/cm,y:cy/cm,z:cz/cm,part:g.part,mid:g.mid,done:true}; }
+  tp.done=true;
   if(tp.type==='heal'){ var hv=8+S.stage*2; addN(hv); toast('回復！ +'+hv+' 体'); burst(tp.x,tp.y,tp.z,0x5dff8a,36,10,1.4); glow(tp.x,tp.y,tp.z,9,0x5dff8a,0.5); addRing(tp.x,tp.z,16,0.45,0x5dff8a); if(!S.auto)sGood(); }
   else { var j, n0=0;
     for(j=en.length-1;j>=0;j--){ var e=en[j]; if(e.dead)continue; var dd=(e.x-tp.x)*(e.x-tp.x)+(e.z-tp.z)*(e.z-tp.z); if(dd<64){ e.hp-=90; if(e.hp<=0){ killEnemy(j); n0++; } } }
@@ -873,13 +883,13 @@ function update(dt){
   S.healT-=dt; if(S.healT<=0){ S.healT=(boss?16:22)*(0.75+Math.random()*0.5); if(S.N<115)spawnTap('heal',(Math.random()-0.5)*11,3+Math.random()*2.5,-10-Math.random()*8,5); }
   S.bombT-=dt; if(S.bombT<=0){ S.bombT=1.2;
     if(boss&&!boss.dead&&boss.z>=boss.hold-1){ S.bombT=7.5;
-      if(boss.parts){ var cand=[], cr=null; for(j=0;j<boss.parts.length;j++){ var bq=boss.parts[j]; if(bq.hp>0){ if(bq.core)cr=bq; else cand.push(bq); } } var bp2=cand.length?cand[Math.floor(Math.random()*cand.length)]:cr; if(bp2)spawnTap('bomb',bp2.x,Math.min(bp2.y,7),boss.z+3.5,2,{part:bp2}); }
-      else spawnTap('bomb',boss.x,4,boss.z+3.5,2,{mid:true}); }
-    else if(!boss&&en.length>30){ var bestE=null, bc=0; for(i=0;i<10;i++){ e=en[Math.floor(Math.random()*en.length)]; if(e.dead||e.z<-44||e.z>-22)continue; var c2=0; for(j=0;j<en.length;j+=2){ var e2=en[j]; if((e2.x-e.x)*(e2.x-e.x)+(e2.z-e.z)*(e2.z-e.z)<40)c2++; } if(c2>bc){bc=c2;bestE=e;} }
-      if(bestE&&bc>=7){ spawnTap('bomb',bestE.x,1.0,bestE.z,Math.min(3,(-5-bestE.z)/13.2),{move:true}); S.bombT=10; } } }
+      if(boss.parts){ var cand=[], cr=null; for(j=0;j<boss.parts.length;j++){ var bq=boss.parts[j]; if(bq.hp>0){ if(bq.core)cr=bq; else cand.push(bq); } } var bp2=cand.length?cand[Math.floor(Math.random()*cand.length)]:cr; if(bp2)spawnBombSet(bp2.x,Math.min(bp2.y,7),boss.z+3.5,3.5,{part:bp2},4.5); }
+      else spawnBombSet(boss.x,4,boss.z+3.5,3.5,{mid:true},4.2); }
+    else if(!boss&&en.length>30){ var bestE=null, bc=0; for(i=0;i<10;i++){ e=en[Math.floor(Math.random()*en.length)]; if(e.dead||e.z<-46||e.z>-32)continue; var c2=0; for(j=0;j<en.length;j+=2){ var e2=en[j]; if((e2.x-e.x)*(e2.x-e.x)+(e2.z-e.z)*(e2.z-e.z)<40)c2++; } if(c2>bc){bc=c2;bestE=e;} }
+      if(bestE&&bc>=7){ spawnBombSet(bestE.x,1.0,bestE.z,Math.min(3.4,(-5-bestE.z)/13.2),{move:true},3.2); S.bombT=10; } } }
   for(i=taps.length-1;i>=0;i--){ var tp=taps[i]; tp.life-=dt;
-    if(tp.part){ tp.x=tp.part.x; if(tp.part.hp<=0)tp.life=0; } else if(tp.mid&&boss){ tp.x=boss.x; } else if(tp.move){ tp.z+=(scroll+3.2)*dt; }
-    tp.grp.position.set(tp.x,tp.y,tp.z); tp.grp.rotation.y+=dt*1.5; tp.sp.position.set(tp.x,tp.y+2.1,tp.z); tp.ring.position.set(tp.x,tp.y,tp.z); tp.ring.lookAt(cam.position); tp.ring.scale.setScalar(0.75+1.1*Math.max(0,tp.life/tp.max));
+    if(tp.part){ tp.x=tp.part.x+tp.ox; if(tp.part.hp<=0)tp.life=0; } else if(tp.mid&&boss){ tp.x=boss.x+tp.ox; } else if(tp.move){ tp.z+=(scroll+3.2)*dt; }
+    tp.grp.position.set(tp.x,tp.y,tp.z); tp.grp.rotation.y+=dt*1.5; if(tp.pop>0)tp.pop-=dt; tp.grp.scale.setScalar((tp.lit?0.72:1)*(1+Math.max(0,tp.pop)*1.8)); tp.sp.visible=!tp.lit; tp.sp.position.set(tp.x,tp.y+2.1,tp.z); tp.ring.position.set(tp.x,tp.y,tp.z); tp.ring.lookAt(cam.position); tp.ring.scale.setScalar(0.75+1.1*Math.max(0,tp.life/tp.max));
     var nn=Math.max(1,Math.ceil(tp.life)); if(nn!==tp.n){ tp.n=nn; tp.sp.material.map=digitTex(nn,tp.type); if(!S.auto)tone(660,0.06,'square',0.04); }
     if(tp.done||tp.life<=0){ if(!tp.done)burst(tp.x,tp.y,tp.z,0x9aa4ae,10,5,0.8); removeTap(tp); taps.splice(i,1); } }
   /* アイテム */
@@ -972,7 +982,7 @@ function useUlt(){ if(S.mode==='play'&&S.gauge>=100&&S.ult<=0){ S.ult=3.2; S.gau
 /* 画面をさわった場所の近くにある「タップする物」を使う */
 function tapAt(cx,cy){
   if(S.mode!=='play')return; var rc=canvas.getBoundingClientRect(), best=null, bd=62*62, v=new THREE.Vector3(), i;
-  for(i=0;i<taps.length;i++){ var tp=taps[i]; if(tp.done)continue; v.set(tp.x,tp.y+0.8,tp.z).project(cam); if(v.z>1)continue;
+  for(i=0;i<taps.length;i++){ var tp=taps[i]; if(tp.done||tp.lit)continue; v.set(tp.x,tp.y+0.8,tp.z).project(cam); if(v.z>1)continue;
     var px=rc.left+(v.x+1)/2*rc.width, py=rc.top+(1-v.y)/2*rc.height, dd=(px-cx)*(px-cx)+(py-cy)*(py-cy); if(dd<bd){bd=dd;best=tp;} }
   if(best)useTap(best);
 }
@@ -1024,7 +1034,7 @@ function loop(ts){
   update(dt); sync(ts/1000); renderer.render(scene,cam);
 }
 /* 調整・点検用：自動操縦で1ステージを最後まで早回しする */
-window.__g={S:S,en:en,setWp:function(k){save.wp=k;},start:startStage,upd:update,boss:function(){return boss;},counts:function(){return [en.length,bullets.length,orbs.length];},
+window.__g={S:S,en:en,taps:taps,tapAt:tapAt,useTap:useTap,setWp:function(k){save.wp=k;},start:startStage,upd:update,boss:function(){return boss;},counts:function(){return [en.length,bullets.length,orbs.length];},
   sim:function(i,noSteer){ var keep={c:save.coins,s:save.stars.slice()}; S.auto=true; startStage(i); S.mode='play'; var n=0; if(noSteer)S.auto=1;
     while(S.mode==='play'&&n++<60*400){ if(noSteer){ S.tx=0; } update(1/60); }
     var res={stage:i+1,win:S.mode==='end'&&S.N>0,N:S.N,maxN:S.maxN,wl:S.wl,t:Math.round(S.t),len:Math.round(S.len),kills:S.kills,got:S.got};
