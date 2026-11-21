@@ -1,0 +1,811 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>霧坂クリニックの夜</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ゲーム"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0b0d14"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-180.png"><link rel="manifest" href="manifest.json"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}body{margin:0;font-size:14px}[hidden]{display:none!important}</style></head><body><title>霧坂クリニックの夜</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{color-scheme:dark;--bg:#0b0d14;--panel:#141826;--panel2:#1b2133;--line:#2f3750;--fg:#ece8df;--dim:#9aa0b4;--acc:#d9a441;--bad:#e0524a;--good:#7fd6a8;--rose:#d9718f}
+body{background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:8px;min-height:calc(100vh - 16px);min-height:calc(100dvh - 16px)}
+.top{display:flex;gap:8px;align-items:center}
+#chapName{flex:1;min-width:0;font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer;touch-action:manipulation;text-align:center;line-height:1.45}
+button.sm{padding:7px 12px;font-size:13px}
+button.main{background:var(--acc);color:#2a1c05;border-color:#f1cf85;font-weight:700}
+button:disabled{opacity:.45;cursor:default}
+#stage{position:relative;width:100%;aspect-ratio:3/3.4;max-height:52vh;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#05060a}
+#stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#chr{transition:opacity .25s,filter .25s}
+#chr.dim{filter:brightness(.5) saturate(.7)}
+#fx{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#fx.go{animation:fl .5s ease-out}
+#stage.shake{animation:sh .4s}
+@keyframes fl{0%{opacity:.85}100%{opacity:0}}
+@keyframes sh{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,-2px)}80%{transform:translate(4px,2px)}}
+@media (prefers-reduced-motion:reduce){#fx.go,#stage.shake{animation:none}}
+#box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px 14px;min-height:150px;display:flex;flex-direction:column;gap:8px;cursor:pointer;flex:1}
+#who{font-size:13px;font-weight:700;color:var(--acc);min-height:18px}
+#txt{font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;font-size:17px;line-height:1.85;min-height:94px;white-space:pre-wrap}
+#more{align-self:flex-end;color:var(--dim);font-size:12px}
+#choices{display:flex;flex-direction:column;gap:8px}
+#choices button{text-align:left}
+#choices button.lock{color:var(--dim);border-style:dashed}
+#box.code #txt{min-height:0;font-size:15px;line-height:1.6}
+#box.code #who{display:none}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pad button{text-align:center!important;font-size:17px;padding:6px 0}
+.digits{font-family:ui-monospace,Consolas,monospace;font-size:28px;letter-spacing:.4em;text-align:center;padding:4px 0 4px .4em;color:var(--acc)}
+#toast{position:fixed;left:50%;top:max(14px,env(safe-area-inset-top,0px));transform:translateX(-50%);background:#2a2110;border:1px solid var(--acc);color:var(--fg);border-radius:10px;padding:9px 14px;font-size:13px;z-index:30;max-width:min(420px,calc(100% - 32px));opacity:0;pointer-events:none;transition:opacity .3s;line-height:1.6}
+#toast.on{opacity:1}
+.ov{position:fixed;inset:0;background:rgba(5,6,10,.93);display:flex;align-items:flex-start;justify-content:center;overflow:auto;z-index:20;padding:max(18px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ov .in{width:100%;max-width:440px;display:flex;flex-direction:column;gap:12px;margin:auto 0}
+h1{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:28px;margin:0;text-align:center;letter-spacing:.08em;text-wrap:balance}
+h2{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:22px;margin:0;text-align:center;text-wrap:balance}
+.sub{color:var(--dim);font-size:13px;text-align:center;margin:0;line-height:1.7}
+.kind{text-align:center;font-size:13px;letter-spacing:.3em;font-weight:700}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.75}
+.note b{color:var(--acc)}
+.col{display:flex;flex-direction:column;gap:8px}
+.flow{display:flex;flex-direction:column;gap:6px}
+.flow .ch{display:flex;gap:8px;align-items:center}
+.flow .ch button{flex:1;text-align:left}
+.flow .en{margin-left:18px;padding-left:12px;border-left:2px solid var(--line);font-size:13px;color:var(--dim);line-height:1.9}
+.flow .en.seen{color:var(--fg)}
+.tag{display:inline-block;font-size:11px;border-radius:6px;padding:1px 6px;margin-right:6px;border:1px solid currentColor}
+.tag.b{color:var(--bad)} .tag.n{color:var(--dim)} .tag.g{color:var(--acc)} .tag.t{color:var(--good)}
+h3{font-size:14px;margin:6px 0 0;color:var(--acc)}
+</style>
+
+<div id="app">
+  <div class="top">
+    <div id="chapName"></div>
+    <button class="sm" id="btnSnd" aria-label="音の入・切">🔇</button>
+    <button class="sm" id="btnFlow">フローチャート</button>
+  </div>
+  <div id="stage"><svg id="bg" viewBox="0 0 300 340" preserveAspectRatio="xMidYMid slice"></svg><svg id="chr" viewBox="0 0 300 400" preserveAspectRatio="xMidYMax meet"></svg><div id="fx"></div></div>
+  <div id="box">
+    <div id="who"></div>
+    <div id="txt"></div>
+    <div id="choices"></div>
+    <div id="more">▼ タップで次へ</div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<div class="ov" id="ovTitle">
+  <div class="in">
+    <p class="sub">推理アドベンチャー</p>
+    <h1>霧坂クリニックの夜</h1>
+    <p class="sub">嵐で孤立した山の療養所。院長が死んだ。<br>朝までに、犯人を見つけなければならない。</p>
+    <div class="note">選択をまちがえると<b>バッドエンド</b>になります。<br>けれど、そこで見たこと・知ったことは<b>「記憶」</b>として残り、やり直したときに<b>◆のついた新しい選択肢</b>が開きます。<br>真相には、何度か倒れてからでないと、たどり着けません。</div>
+    <div class="col">
+      <button class="main" id="btnStart">はじめから</button>
+      <button id="btnCont">つづきから</button>
+      <button id="btnFlow2">フローチャート・エンド一覧</button>
+      <button id="btnSnd2">音楽と効果音：切</button>
+    </div>
+    <p class="sub" id="prog"></p>
+  </div>
+</div>
+
+<div class="ov" id="ovEnd" hidden>
+  <div class="in">
+    <div class="kind" id="endKind"></div>
+    <h2 id="endTitle"></h2>
+    <div class="note" id="endMem"></div>
+    <div class="note" id="endHint"></div>
+    <div class="col">
+      <button class="main" id="btnRetry">直前の選択にもどる</button>
+      <button id="btnEndFlow">フローチャートから選ぶ</button>
+      <button id="btnEndTitle">タイトルへ</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ovFlow" hidden>
+  <div class="in">
+    <h2>フローチャート</h2>
+    <p class="sub">たどり着いた章からやり直せます。記憶は消えません。</p>
+    <div class="flow" id="flow"></div>
+    <h3>記憶</h3>
+    <div class="note" id="memList"></div>
+    <div class="col"><button id="btnFlowClose">とじる</button><button class="sm" id="btnWipe">記録をすべて消す</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+function $(id){return document.getElementById(id);}
+
+/* ---------- 記録 ---------- */
+var KEY='kirisaka_v2', save={mem:{},ends:{},chap:{},epi:{},last:null};
+try{ var raw=localStorage.getItem(KEY); if(raw){ var o=JSON.parse(raw); if(o&&o.mem){ save.mem=o.mem||{}; save.ends=o.ends||{}; save.chap=o.chap||{}; save.epi=o.epi||{}; save.last=o.last||null; } } }catch(e){}
+function store(){ try{ localStorage.setItem(KEY,JSON.stringify(save)); }catch(e){} }
+
+/* ---------- 記憶・章・結末の一覧 ---------- */
+var MEM={
+  M1:'ブランデーには毒が入っていた。あの瓶は院長室から来た。',
+  M2:'階段で私を突き落とした者は、泣きながら謝っていた。',
+  M3:'地下の保管庫の暗証番号は「2906」。',
+  M4:'玲奈のワインには睡眠薬。彼女は遺言を探していて、院長室のマスターキーを持っている。',
+  M5:'停電のあいだ、冴子は地下の保管庫に閉じこめられていた。'
+};
+var MKEYS=['M1','M2','M3','M4','M5'];
+var CHAPS=[['p0','プロローグ　嵐の夜'],['d1','午後8時　夕食'],['c1','午後11時　院長室'],['c2','午後11時半　ラウンジ'],['c3','聞きこみ'],['c4','午前0時'],['c5','午前1時　自室'],['c6','午前2時'],['c65','午前3時　停電'],['v1','保管庫からの脱出'],['c66','午前4時'],['c7','午前5時　告発']];
+var ENDS=[
+  ['b5','c1','b','濁流'],['b1','c2','b','毒の杯'],['b2','c4','b','暗い階段'],['b3','c4','b','凍える保管庫'],['b4','c5','b','甘い眠り'],
+  ['b11','c65','b','扉の前で'],['b12','v1','b','氷の底で'],['b13','c66','b','屋上の風'],
+  ['b6','c7','b','まちがった告発・妻'],['b7','c7','b','まちがった告発・事務長'],['b8','c7','b','まちがった告発・患者'],['b9','c7','b','証拠のない告発'],['b10','c7','b','崩れた推理'],
+  ['en','c7','n','夜明け'],['eg','c7','g','雨上がり'],['et','c7','t','霧の晴れる朝']
+];
+var KIND={b:'BAD END',n:'NORMAL END',g:'GOOD END',t:'TRUE END'}, KSHORT={b:'BAD',n:'NORMAL',g:'GOOD',t:'TRUE'}, KCOL={b:'var(--bad)',n:'var(--dim)',g:'var(--acc)',t:'var(--good)'};
+
+/* ---------- 物語 ----------
+   L=文章（「名前|セリフ」。名前なしは地の文。先頭が「!」の行は驚きの演出つき）、C=選択肢、to=次の場面、end=結末
+   選択肢：mem=その記憶がないと選べない、if=その印が全部あると出る、unless=全部あると出ない、once=1回だけ、set=印をつける、cost=寒さが進む
+   to が配列のときは [条件, 条件が合うときの行き先, 合わないときの行き先] */
+var HUB3=[
+  {t:'副院長・玲奈に話を聞く',to:'t_reina',once:'k_reina'},
+  {t:'事務長・冴子に話を聞く',to:'t_saeko',once:'k_saeko'},
+  {t:'入院患者・澪に話を聞く',to:'t_mio',once:'k_mio'},
+  {t:'看護師・ゆかりに話を聞く',to:'t_yukari',once:'k_yukari'},
+  {t:'図書室をのぞく',to:'t_lib',once:'k_lib'},
+  {t:'自室で決算書を見直す',to:'t_memo',once:'k_memo'},
+  {t:'夜がふけるのを待つ（午前0時へ）',to:'c4'}
+];
+var MEMO=[{t:'「リース料」――去年の倍になっている',to:'t_memo_ok'},{t:'「接待交際費」――少し多い',to:'t_memo_ng'},{t:'「減価償却費」――毎年同じ額だ',to:'t_memo_ng'}];
+var HUB6=[
+  {t:'マスターキーで院長室を調べる',to:'c6o',if:['key']},
+  {t:'澪の病室を訪ねる',to:'c6m',if:['trust'],once:'k_mio2'},
+  {t:'自室に戻って、少し体を休める',to:'c65'}
+];
+var OFF=[
+  {t:'ブランデーの瓶のコルクを調べる',to:'c6o2',mem:'M1',once:'k_cork'},
+  {t:'壁の金庫を調べる',to:'c6s',unless:['WILL']},
+  {t:'院長室を出る',to:'c6r'}
+];
+var VH=[
+  {t:'冴子を上着でくるむ',to:'v_wrap',once:'k_wrap',cost:1},
+  {t:'扉を調べる',to:'v_door',once:'k_door',cost:1},
+  {t:'棚を調べる',to:'v_shelf',once:'k_shelf',cost:1},
+  {t:'天井の換気口を調べる',to:'v_vent',once:'k_vent',cost:1},
+  {t:'床を調べる',to:'v_floor_dark',unless:['light'],cost:1},
+  {t:'床を調べる',to:'v_floor',if:['light'],once:'k_floor',cost:1},
+  {t:'解除パネルに番号を入れる',to:'v_code',if:['k_door']}
+];
+var ACC=[
+  {t:'「犯人は、玲奈さんだ」',to:'b6'},{t:'「犯人は、冴子さんだ」',to:'b7',unless:['saeDead']},{t:'「犯人は、澪さんだ」',to:'b8'},
+  {t:'「犯人は、ゆかりさんだ」',to:'q1',if:['E1','E2','E3']},{t:'「犯人は、ゆかりさんだ」',to:'b9',unless:['E1','E2','E3']}
+];
+var N={
+p0:{chap:'p0',bg:'ext',ch:'',L:[
+  '山道を一時間。ワイパーが追いつかないほどの雨だった。',
+  '私は真壁恭介。税理士だ。今夜の依頼人は、山あいの療養所「霧坂クリニック」の院長、霧坂宗一郎。',
+  '用件は電話でこう言われただけだ。\n「相続のことで相談がある。それと――帳簿を、見てもらいたい」',
+  '橋を渡りきったとき、背後で川がうなった。あと一時間おそければ、渡れなかったかもしれない。'],to:'p1'},
+p1:{bg:'lounge',ch:'',L:[
+  '玄関で迎えてくれたのは、白衣の下にワインレッドのドレスをのぞかせた女性だった。',
+  '玲奈|遠いところを、ようこそ。副院長の霧坂玲奈です。……主人の、妻でもありますの。',
+  '差し出された手は冷たく、薔薇の香水がふわりと香った。目をそらすのに、少し努力が要った。',
+  'ゆかり|わあ、びしょぬれ！　タオルどうぞ。看護師の早瀬ゆかりです。先生、髪ふいてあげましょうか？',
+  '冗談めかして背伸びをする彼女から、柑橘のハンドクリームの匂いがした。',
+  '冴子|事務長の黒木です。帳簿のことでしたら、まず私を通していただけますか。',
+  '眼鏡の奥の目は笑っていない。ひとつだけ外れたブラウスのボタンが、妙に印象に残った。',
+  'ラウンジの隅には、もう一人。長い黒髪の入院患者がいた。',
+  '澪|……白石澪、です。ここには、長く、います。',
+  '薄いガウンの肩が細い。彼女は私ではなく、窓の外の稲妻を見ていた。'],to:'d1'},
+d1:{chap:'d1',bg:'lounge',ch:'',L:[
+  '夕食は長いテーブルで、ろうそくの灯りだった。院長は上座で、ほとんど口をきかない。',
+  'ゆかりが料理を運び、ワインを注いでまわる。空いている席は三つ。'],
+  C:[{t:'玲奈の隣に座る',to:'d_reina'},{t:'冴子の隣に座る',to:'d_saeko'},{t:'澪の隣に座る',to:'d_mio'}]},
+d_reina:{bg:'lounge',ch:'reina',L:[
+  '玲奈|あら、うれしい。年寄りと数字の話ばかりで、退屈していたところ。',
+  'テーブルの下で、彼女のつま先が私の足首に触れた。偶然にしては、長い。',
+  '玲奈|先生は、嘘が見抜けるお仕事でしょう？　……この館の人間は、みんな嘘つきよ。私も含めて。'],to:'d_end'},
+d_saeko:{bg:'lounge',ch:'saeko',L:[
+  '冴子|……どうぞ。ただし、食事中に帳簿の話はなさらないで。',
+  '彼女は魚の骨を、外科医のような手つきで外していく。几帳面な人だ。',
+  'グラスを取ろうとして、指が重なった。彼女は手を引かなかった。耳だけが、少し赤い。',
+  '冴子|……数字の合わない帳簿は、きらいですか。私は――こわいんです。合わない数字が。'],to:'d_end'},
+d_mio:{bg:'lounge',ch:'mio',L:[
+  '澪|……ここ、いつも空いてるんです。私の隣。',
+  '彼女はスープにほとんど手をつけず、パンを小さくちぎっていた。',
+  '澪|先生は、外から来た人の匂いがします。雨と、ガソリンと……あと、すこし、さびしい匂い。',
+  'そう言って、彼女は初めて笑った。ガウンの袖から出た手首が、驚くほど白い。'],to:'d_end'},
+d_end:{bg:'lounge',ch:'',L:[
+  'デザートの皿が下がるころ、院長が立ち上がり、私の耳もとで言った。',
+  '「真壁先生。十一時に院長室へ。誰にも言わずに。……今夜、すべてお話しします」',
+  'その横顔は、何かを決めた人間の顔だった。'],to:'c1'},
+c1:{chap:'c1',bg:'office',ch:'',L:[
+  '午後十一時。院長室のドアは、少し開いていた。',
+  '!霧坂宗一郎は、机に突っ伏していた。指先には倒れたグラス。琥珀色の酒が、帳簿の上に広がっている。',
+  '脈はない。机の上にはブランデーの瓶。そして――開かれた帳簿の何ページかが、破り取られていた。',
+  '悲鳴を聞いて、四人が集まってきた。電話は通じない。携帯は圏外。嵐はひどくなる一方だ。',
+  '冴子|……院長室は私が施錠します。警察が来るまで、誰も入れません。',
+  '朝まで、ここには私たち五人しかいない。そしておそらく、その中に――。'],
+  C:[{t:'車を出して、町へ知らせに行く',to:'b5'},{t:'館に残り、自分で調べる',to:'c2'}]},
+b5:{bg:'ext',ch:'',L:[
+  '警察を呼ぶのが筋だ。私は車に飛び乗った。',
+  'ヘッドライトの先に、橋が見えた。……いや、橋があったはずの場所が見えた。',
+  '!ブレーキを踏んだときには、前輪はもう宙にあった。',
+  '冷たい水の中で思った。あの館の誰が嘘をついていたのか、私はまだ何ひとつ知らない。'],
+  end:{id:'b5',hint:'逃げても真相には近づけない。館に残って調べよう。'}},
+c2:{chap:'c2',bg:'lounge',ch:'yukari',L:[
+  'ラウンジのソファに沈みこむと、ゆかりが隣に座った。近い。膝が触れている。',
+  'ゆかり|先生、顔色まっ白ですよ。……はい、気つけに一杯。いいお酒なんですから。',
+  '差し出されたグラスの中で、琥珀色が揺れた。',
+  'ゆかり|飲めないなら、あたしが口移しで――なんて、冗談です。'],
+  C:[{t:'ありがたく飲む',to:'b1'},{t:'「いや、いまは遠慮しておくよ」',to:'c3'},{t:'「その瓶、見せてくれないか」',to:'c2b',mem:'M1'}]},
+b1:{bg:'lounge',ch:'yukari',L:[
+  'のどが焼けるように熱い。いい酒だ、と思ったのは最初の三秒だけだった。',
+  '!グラスが落ちた。指がしびれる。舌が動かない。',
+  'ゆかり|先生？　……先生！？　うそ、だって、これ、院長室の――',
+  '彼女の声が遠ざかる。そうか。院長と同じ酒を、私は飲んだのだ。'],
+  end:{id:'b1',mem:'M1',hint:'あの瓶はどこから来たのか。次は飲まずに、瓶そのものを見せてもらおう。'}},
+c2b:{bg:'lounge',ch:'yukari',L:[
+  '真壁|その瓶、見せてくれないか。',
+  'ゆかり|え？　……ああ、これ、院長室にあったのを持ってきたんです。もったいないなって。',
+  '院長が死んだ机の上の瓶だ。私は首を振った。\n「飲まないほうがいい。誰も」',
+  'ゆかり|……こわいこと言わないでくださいよ。じゃあ、戻しておきますね。事務長に鍵、借りて。',
+  '彼女は瓶を抱えて出ていった。その横顔が一瞬こわばったのを、私は見逃さなかった。'],to:'c3'},
+c3:{chap:'c3',bg:'corridor',ch:'',L:['朝まで時間はある。私は館を歩き、一人ずつ話を聞くことにした。'],C:HUB3},
+c3r:{bg:'corridor',ch:'',L:['さて、次はどうしようか。'],C:HUB3},
+t_reina:{bg:'lounge',ch:'reina',L:[
+  '玲奈は暖炉の前で、脚を組んでいた。ドレスの裾から、白いふくらはぎがのぞく。',
+  '玲奈|主人とは二十も離れていましたの。財産目当て、と皆さんおっしゃるわ。',
+  '玲奈|でもね先生。あの人、最近、遺言を書き換えたの。どこにしまったのかしら……。',
+  '彼女は身を乗り出し、私のネクタイの結び目を指でなおした。薔薇の香りが濃くなる。',
+  '玲奈|税理士の先生なら、ご存じ？　……あとで、ゆっくり教えてくださらない？'],to:'c3r'},
+t_saeko:{bg:'office',ch:'saeko',L:[
+  '事務室。冴子は電卓を叩く手を止めなかった。',
+  '冴子|破られた帳簿のページ？　知りません。院長はこの半年、何かを一人で調べていました。',
+  '真壁|医療機器のリース料が、相場の倍だ。支払先は実在しますか。',
+  '電卓の音が止まった。彼女は眼鏡を外し、初めて私をまっすぐ見た。',
+  '冴子|……さすがですね。午前0時、地下の保管庫へいらして。本物の帳簿をお見せします。二人きりで。',
+  '外したままの眼鏡。ほどけた一筋の髪。それが誘いなのか罠なのか、私には読めなかった。'],set:'invite',to:'c3r'},
+t_mio:{bg:'room',ch:'mio',L:[
+  '二階の病室。澪はベッドの上で膝を抱えていた。雷が光るたび、薄いガウンごしに肩が震える。',
+  '澪|……こわいんです。雷じゃなくて。この館が。'],
+  C:[{t:'となりに座り、黙って話を待つ',to:'t_mio_a',set:'trust'},{t:'「今夜、何か見なかったか」と問いつめる',to:'t_mio_b'}]},
+t_mio_a:{bg:'room',ch:'mio',L:[
+  '私はベッドの端に腰を下ろした。しばらくして、彼女の頭がそっと私の肩にもたれた。',
+  '澪|……先生は、嘘をつかない人の匂いがします。',
+  '澪|あとで、お話しします。もう少しだけ、勇気が出たら。'],to:'c3r'},
+t_mio_b:{bg:'room',ch:'mio',L:[
+  '澪|……見てません。なにも。',
+  '彼女はシーツを引き上げ、背を向けてしまった。扉は閉じた。たぶん、心のほうも。'],to:'c3r'},
+t_yukari:{bg:'corridor',ch:'yukari',L:[
+  'ナースステーション。ゆかりは包帯を巻きなおしながら、鼻歌をうたっていた。',
+  'ゆかり|十時半？　あたし、ずっとここにいましたよ。カルテの整理してて。',
+  'ゆかり|院長はね、いい先生でしたよ。……患者さんが死んでも、ぜったい自分のせいにしない、いい先生。',
+  '笑顔のまま、彼女は包帯をきつく、きつく結んだ。',
+  'ゆかり|先生も肩こってますね。もんであげます。……ほら、力ぬいて。',
+  '背中に体温が押しつけられる。耳もとで、柑橘の香りがした。'],to:'c3r'},
+t_lib:{bg:'office',ch:'',L:[
+  '図書室。医学書の列の中に一冊だけ、背表紙のない帳面があった。院長の日記だ。',
+  '「七月が来るたびに眠れない。あの夜、私は検査結果を見落とした。そして――恐ろしくなった」',
+  '「償う方法を、ずっと考えている。金ではない。だが金のほかに、私に何が遺せるだろう」',
+  '最後のページには、こうあった。\n「番号は、私が一生忘れてはならない日にした」'],to:'c3r'},
+t_memo:{bg:'room',ch:'',L:[
+  '自室で、預かっていた決算書の写しを広げた。数字は嘘をつかない。嘘をつくのは、いつも人だ。',
+  '気になる科目が三つある。いちばんおかしいのは――'],C:MEMO},
+t_memo2:{bg:'room',ch:'',L:['もう一度、数字を見直す。いちばんおかしいのは――'],C:MEMO},
+t_memo_ng:{bg:'room',ch:'',L:['いや、これは説明がつく。……本当におかしいのは、別の科目だ。'],to:'t_memo2'},
+t_memo_ok:{bg:'room',ch:'',L:[
+  'リース料。機械は増えていないのに、支払いだけが倍だ。払った先は、設立二年の聞いたことのない会社。',
+  '誰かが、この館から金を抜いている。',
+  'だが――これは、人を殺すほどの額だろうか。私には、そうは思えなかった。'],to:'c3r'},
+c4:{chap:'c4',bg:'corridor',ch:'',L:[
+  '午前0時。館の時計が鳴った。',
+  '破り取られた帳簿のページ。あれが見つかれば、院長が何を調べていたのかが分かる。'],
+  C:[{t:'約束どおり、冴子と二人で保管庫へ行く',to:'b3',if:['invite']},{t:'ひとりで地下の資料室を探る',to:'b2'},{t:'今夜は動かず、自室に戻る',to:'c5'},{t:'冴子が来る前に、保管庫を自分で開ける',to:'c4b',mem:'M3'}]},
+b3:{bg:'basement',ch:'saeko',L:[
+  '地下の廊下の突き当たり。冴子は暗証番号を打ちこんだ。指の動きが見えた。――2、9、0、6。',
+  '重い扉が開く。冷気。薬品と書類の棚。',
+  '冴子|奥の棚です。どうぞ。',
+  '!一歩入った瞬間、背中を押された。扉が閉まる。',
+  '冴子|ごめんなさい。朝には出してあげます。それまでに、私は消えますから。',
+  'だが彼女は知らなかった。この古い冷却装置は、一度閉めると温度が下がり続けることを。',
+  'まぶたが重い。2906。2906。それだけを、私は繰り返していた。'],
+  end:{id:'b3',mem:'M3',hint:'冴子は人殺しではない。だが、ついて行ってはいけない。番号はもう覚えた。'}},
+b2:{bg:'basement',ch:'',L:[
+  '隠すなら地下の資料室だろう。私は懐中電灯を手に、ひとり階段を下りた。',
+  '中ほどまで来たとき、背後で床が、きゅっ、と鳴った。ナースシューズの音だ。',
+  '!ふり返る前に、背中に両手が当たった。',
+  '落ちていくあいだ、柑橘の匂いがした。そして、震える声を聞いた。',
+  '「……ごめんなさい。ごめんなさい、先生」',
+  'その声の主を、私は知っている。'],
+  end:{id:'b2',mem:'M2',hint:'夜中にひとりで動くのは危険だ。だが、あの声は……本当は殺したくなかったのだ。'}},
+c4b:{bg:'basement',ch:'',L:[
+  '2906。指が覚えていた。なぜ知っているのか、自分でも説明できない。',
+  '保管庫の奥、「リース契約」と書かれた箱の底に、本物の帳簿があった。架空リースで消えた金は、冴子の横領だ。',
+  'だが、帳簿のあいだに挟まっていたのは、金とは関係のない一枚だった。古いカルテの写しだ。',
+  '「三年前の7月14日　早瀬美咲（入院患者）死亡」\n欄外に、几帳面な字。「院長指示により差し替え。原本の写しをここに保管」',
+  '!早瀬。看護師のゆかりと、同じ姓だ。'],set:'E2',to:'c5'},
+c5:{chap:'c5',bg:'room',ch:'reina2',L:[
+  '午前一時。自室のドアが、控えめに叩かれた。',
+  'ドアの外に玲奈が立っていた。白衣はない。肩紐の細いナイトドレス一枚に、ワインの瓶とグラスを二つ。',
+  '玲奈|眠れなくて。……先生も、でしょう？　入れてくださる？'],
+  C:[{t:'招き入れ、ワインを受け取る',to:'b4'},{t:'「今夜は誰も信用できません」とドアを開けない',to:'c6'},{t:'招き入れるが、ワインには口をつけない',to:'c5b',mem:'M4'}]},
+b4:{bg:'room',ch:'reina2',L:[
+  '彼女はベッドの端に座り、私のグラスに赤を注いだ。肩紐が片方、すべり落ちる。直そうともしない。',
+  '玲奈|さびしい夜は、きらい。',
+  '唇が近づく。ワインは甘く、彼女の指は冷たく、私のまぶたは――不自然なほど、重かった。',
+  '薄れる意識の中で、彼女が私の鞄を開ける音がした。',
+  '玲奈|遺言の写し……どこ？　先生、預かっているんでしょう？　……あら。少し、薬が多かったかしら。',
+  '彼女の胸もとで、小さな鍵が揺れていた。院長室のマスターキーだ。それが、私の見た最後のものになった。'],
+  end:{id:'b4',mem:'M4',hint:'玲奈の目的は遺言だ。飲まずに話を聞けば、味方にできるかもしれない。'}},
+c5b:{bg:'room',ch:'reina2',L:[
+  '彼女を招き入れ、グラスは受け取った。だが、口はつけない。',
+  '真壁|睡眠薬入りのワインで眠らせて、鞄から遺言の写しを探す。……そんなことをしなくても、私は持っていませんよ。',
+  '玲奈の手が止まった。それから、ふっと肩の力が抜けた。すべり落ちた肩紐を、今度は自分で直す。',
+  '玲奈|……こわい人。でも、きらいじゃないわ。',
+  '玲奈|私は主人を殺していない。新しい遺言で全部失うかもしれなかった、それだけ。信じてくださる？',
+  '彼女は首から細い鎖を外し、私の手のひらに落とした。まだ体温の残る、小さな鍵。',
+  '玲奈|院長室のマスターキー。犯人を見つけて。……お礼は、そのあとで、ゆっくり。'],set:'key',to:'c6'},
+c6:{chap:'c6',bg:'corridor',ch:'',L:['午前二時。館は静まり返っている。夜明けまで、あと三時間。'],C:HUB6},
+c6r:{bg:'corridor',ch:'',L:['廊下に戻った。館は、息をひそめているようだ。'],C:HUB6},
+c6o:{bg:'office',ch:'',L:[
+  'マスターキーが回った。院長室は、あのときのままだ。',
+  '机の上に、ブランデーの瓶が戻されている。壁には、小さな金庫が埋めこまれていた。'],C:OFF},
+c6oo:{bg:'office',ch:'',L:['ほかに、調べておくべきものは。'],C:OFF},
+c6o2:{bg:'office',ch:'',L:[
+  'コルクを光にかざす。中心に、針で刺したような小さな穴があった。',
+  '!封を切る前の瓶に、注射器で毒を入れたのだ。',
+  '注射器を自然に持ち歩ける人間は、この館に限られている。'],set:'E1',to:'c6oo'},
+c6s:{bg:'office',ch:'',L:[
+  'ダイヤル式の金庫だ。番号は四けた。',
+  '扉に、院長の字の付箋が貼ってある。\n「番号は、私が一生忘れてはならない日」'],code:{ans:'0714',ok:'c6s2',ng:'c6s_ng',cancel:'c6oo'}},
+c6s_ng:{bg:'office',ch:'',L:['開かない。……院長が忘れてはならない日。その手がかりを、私はまだ持っていないのかもしれない。'],to:'c6oo'},
+c6s2:{bg:'office',ch:'',L:[
+  '!かちり、と音がして、扉が開いた。',
+  '中には封筒が二通。一通は「遺言書」。もう一通の表には、こう書かれていた。\n「早瀬ゆかり様」',
+  'その下に、破り取られていた帳簿のページ。破ったのは、院長自身だったのだ。',
+  '私は二通の封筒を、上着の内ポケットにしまった。これは、朝まで私が預かる。'],set:'WILL',to:'c6oo'},
+c6m:{bg:'room',ch:'mio',L:[
+  '澪の病室。ノックの前に、ドアが開いた。',
+  '澪|……来てくれると、思ってました。',
+  '!雷が鳴った。彼女は小さく叫んで、私の胸にしがみついた。薄い布ごしに、速い鼓動が伝わってくる。',
+  '澪|十時半ごろ、廊下で見たんです。院長室のほうへ歩いていく人を。……瓶を、抱えていました。',
+  '澪|ゆかりさん、でした。あの人、私にだけはやさしいから……言えなくて。',
+  '「ずっとナースステーションにいた」という証言は、嘘だった。',
+  '澪|先生。……もう少しだけ、こうしていても、いいですか。'],set:'E3',to:'c6r'},
+c65:{chap:'c65',bg:'dark',ch:'',L:[
+  '!午前三時。ふいに、すべての灯りが消えた。',
+  '非常灯もつかない。窓の外の稲妻だけが、廊下を一瞬ずつ切り取っていく。',
+  '!二階から、女の悲鳴が聞こえた。'],
+  C:[{t:'悲鳴のした二階へ走る',to:'n_scream'},{t:'澪の病室へ向かう',to:'n_mio3'},{t:'まっすぐ地下の保管庫へ走る',to:'vdoor',mem:'M5'}]},
+n_scream:{bg:'dark',ch:'reina2',L:[
+  '暗闇の中で、やわらかいものが胸に飛びこんできた。薔薇の香り。玲奈だ。',
+  '玲奈|だれかが……だれかが廊下を走っていったの。こわい……離さないで。',
+  '細い肩が震えている。ナイトドレスごしの体温が、やけに熱い。私はしばらく、その背中を抱いていた。',
+  '三十分ほどして、灯りが戻った。',
+  'ゆかり|ブレーカー、上げてきましたよー。古い建物はこれだから。……あれ？　事務長、見ませんでした？'],to:'n_dead'},
+n_dead:{bg:'basement',ch:'',L:[
+  '冴子の姿がどこにもない。私たちは手分けして館を探した。',
+  '地下の保管庫の前で、玲奈が足を止めた。扉のすき間から、白い冷気が流れ出している。',
+  '玲奈が、院長から聞いていた非常用の番号で扉を開けた。',
+  '!冴子は、棚にもたれて座っていた。眼鏡に霜がついている。もう、息はなかった。',
+  '内側の扉には、爪でひっかいた跡が何本も残っていた。停電のあいだ、彼女はずっとここにいたのだ。'],mem:'M5',set:'saeDead',to:'c66'},
+n_mio3:{bg:'dark',ch:'mio',L:[
+  '澪はベッドの上で、毛布をかぶって震えていた。私の手を探りあて、両手で握りしめる。',
+  '澪|先生……下から、音がするんです。ずっと。だれかが、叩いてるみたいな……。',
+  '耳をすます。たしかに聞こえる。床のずっと下から、鈍く、弱く。',
+  '私は彼女の手をそっとほどき、階段へ走った。'],to:'vdoor'},
+vdoor:{bg:'basement',ch:'',L:[
+  '地下の保管庫。扉の向こうから、弱々しく叩く音がする。',
+  '「……だれか……」\n冴子の声だ。'],
+  C:[{t:'暗証番号を打ちこむ',to:'v0',mem:'M3'},{t:'扉を力ずくでこじ開ける',to:'b11'}]},
+b11:{bg:'basement',ch:'',L:[
+  '取っ手を引く。びくともしない。番号を知らない私には、この扉はただの鉄の壁だ。',
+  '叩く音が、だんだん弱くなっていく。',
+  '夢中で扉に体当たりしていた私は、背後の、きゅっ、という足音に気づくのが遅れた。',
+  '!首すじに、冷たい針が入った。',
+  '「……先生まで、来ちゃだめじゃないですか」'],
+  end:{id:'b11',hint:'力では開かない。番号が要る。番号を知る機会は、午前0時にあった。'}},
+v0:{bg:'vault',ch:'saeko2',L:[
+  '2、9、0、6。扉が開いた。冷気が顔を打つ。',
+  '冴子は棚にもたれて、ぐったりと座っていた。唇が青い。だが、息はある。',
+  '駆けよって抱き起こした、そのときだった。',
+  '!背後で、重い扉が閉まった。',
+  '扉の向こうから、くぐもった声がした。\n「……ごめんね、先生。二人で、静かにしてて」',
+  '冷却装置のうなりが、一段高くなった。'],to:'v1'},
+v1:{chap:'v1',bg:'vault',ch:'saeko2',reset:'cold',L:['閉じこめられた。温度はどんどん下がっていく。体が動くうちに、ここを出なければ。'],C:VH},
+v1r:{bg:'vault',ch:'saeko2',limit:{max:7,to:'b12'},L:['息が白い。（寒さの限界まで、あと {cold} 手）'],C:VH},
+v_wrap:{bg:'vault',ch:'saeko2',L:[
+  '上着を脱いで彼女の肩にかけ、冷えきった体を抱きよせた。細い。こんなに細い人だったのか。',
+  '冴子|……あたたかい。……ごめんなさい、私、あなたを、だまそうと……。',
+  '冴子|扉の、右下……非常用の解除パネルが……番号は、点検のたびに、変えるんです……。',
+  'それだけ言うと、彼女は私の胸に額を押しつけて、目を閉じた。'],to:'v1r'},
+v_door:{bg:'vault',ch:'saeko2',L:[
+  '扉の右下に、小さなふた。開けると、数字のボタンが並んでいた。非常用の解除パネルだ。四けた。',
+  'でたらめに押している時間はない。番号の手がかりが、どこかにあるはずだ。'],to:'v1r'},
+v_shelf:{bg:'vault',ch:'saeko2',L:[
+  '薬品の箱、古い書類。その奥に、懐中電灯が転がっていた。つく。',
+  '光の輪の中で、自分の息がまっ白に見えた。'],set:'light',to:'v1r'},
+v_vent:{bg:'vault',ch:'saeko2',L:[
+  '棚によじのぼって換気口に手をのばす。鉄の格子は、びくともしなかった。',
+  '指先の感覚が、もうほとんどない。'],to:'v1r'},
+v_floor_dark:{bg:'vault',ch:'saeko2',L:['床に手をついて探る。暗くて、何も見えない。指がかじかむだけだった。'],to:'v1r'},
+v_floor:{bg:'vault',ch:'saeko2',L:[
+  '懐中電灯で床を照らす。棚の下に、紙が一枚落ちていた。',
+  '「冷却装置　点検票　前回点検：3月12日　担当：黒木」',
+  'その下に、几帳面な字で書きそえてある。\n「※解除番号は、点検日を逆さに読むこと」'],to:'v1r'},
+v_code:{bg:'vault',ch:'saeko2',L:['解除パネルの前にひざをつく。四けたの番号を入れる。'],code:{ans:'2130',ok:'v9',ng:'v_ng',cancel:'v1r'}},
+v_ng:{bg:'vault',ch:'saeko2',addcold:1,L:['赤いランプがついた。ちがう。'],to:'v1r'},
+b12:{bg:'vault',ch:'saeko2',L:[
+  'もう、指が動かない。',
+  '私は冴子を抱いたまま、棚にもたれて座りこんだ。彼女の髪が、ほおに冷たい。',
+  '冴子|……ねえ。合わない数字、ひとつだけ……あなたに、直してほしかった……。',
+  '眠い。ひどく眠い。二人ぶんの白い息が、少しずつ、小さくなっていった。'],
+  end:{id:'b12',hint:'動ける手数には限りがある。まず明かりを手に入れ、それから床を照らそう。'}},
+v9:{bg:'lounge',ch:'saeko2',L:[
+  '!緑のランプ。扉が、開いた。',
+  '冴子を背負って階段を上がる。ブレーカーを上げると、館に灯りが戻った。',
+  'ラウンジの暖炉の前。毛布にくるまった冴子は、割れた眼鏡を握りしめていた。',
+  '冴子|……見ないでください。眼鏡がないと、私、ひどい顔なんです。',
+  '真壁|そんなことはない。',
+  '冴子|……三年前のカルテを書き換えたのは、私です。院長に命じられて。原本の写しは、こわくて捨てられなかった。',
+  '冴子|あの子は、それを知っています。だから私を……。先生、あの子を、止めてあげて。',
+  '毛布の中から伸びた手が、私の手を握った。まだ冷たい。けれど、もう震えてはいなかった。'],set:'saeAlive',to:'c66'},
+c66:{chap:'c66',bg:'corridor',ch:'yukari',L:[
+  '午前四時。廊下の窓が、わずかに青くなりはじめていた。',
+  'ゆかり|先生。……ちょっと、いいですか。',
+  'いつもの笑顔だ。だが、目の下が赤い。',
+  'ゆかり|屋上、行きません？　雨、やんできたし。二人きりで、話したいことがあるんです。'],
+  C:[{t:'ついて行く',to:'b13'},{t:'「話は朝、みんなの前で聞くよ」',to:'c7pre'}]},
+b13:{bg:'roof',ch:'yukari2',L:[
+  '屋上は風が強かった。ゆかりは手すりにもたれ、ナースキャップを外した。ほどけた髪が流れる。',
+  'ゆかり|先生ってさ、やさしいよね。数字ばっか見てるくせに、人のこと、ちゃんと見てる。',
+  '彼女は一歩近づき、背伸びをして、私の唇に自分の唇を重ねた。柑橘の香り。少し、しょっぱい。',
+  'ゆかり|……あたしね、先生みたいな人に、三年前に会いたかった。',
+  '!わき腹に、ちくりと痛みが走った。',
+  'ゆかり|ごめんね。ほんとに、ごめん。……きらいじゃ、なかったのにな。',
+  'ひざが崩れる。明けていく空を背に、彼女は泣きながら笑っていた。'],
+  end:{id:'b13',hint:'彼女と二人きりになってはいけない。話は、みんなの前で。'}},
+c7pre:{bg:'corridor',ch:'yukari',L:[
+  'ゆかり|……そっか。うん、そうだよね。',
+  '彼女は笑って手をふり、廊下の角に消えた。その背中が、ひどく小さく見えた。'],to:['saeDead','c7d','c7']},
+c7:{chap:'c7',bg:'lounge',ch:'',L:[
+  '午前五時。雨は小降りになっていた。私は全員をラウンジに集めた。',
+  '四人の目が私を見ている。告発する相手をまちがえることは、許されない。'],C:ACC},
+c7d:{chap:'c7',bg:'lounge',ch:'',L:[
+  '午前五時。雨は小降りになっていた。私は残った全員をラウンジに集めた。',
+  '三人の目が私を見ている。ソファのひとつは、空いたままだ。告発する相手をまちがえることは、許されない。'],C:ACC},
+b6:{bg:'lounge',ch:'reina',L:[
+  '真壁|犯人はあなただ、玲奈さん。動機は遺産です。',
+  '玲奈は否定しなかった。ただ、ひどく悲しそうに笑った。\n「そう見えるでしょうね」',
+  '朝、警察が来て、彼女は連れて行かれた。私は役目を終えたつもりで、帰りの車に乗った。',
+  '助手席に、差し入れだという水筒があった。柑橘の香りのする、あたたかいお茶だった。',
+  '!橋の手前で、ハンドルを握る指がしびれはじめた。'],
+  end:{id:'b6',hint:'遺産という動機は分かりやすすぎる。毒を入れた「方法」から考えよう。'}},
+b7:{bg:'lounge',ch:'saeko',L:[
+  '真壁|架空リースで金を抜いていたのは、あなただ。発覚をおそれて院長を――',
+  '冴子|横領は認めます。でも、殺してはいない！',
+  '彼女は警察に引き渡された。事件は終わった――はずだった。',
+  '半年後、私は新聞の小さな記事を読んだ。霧坂クリニックで、また一人、入院患者が死んだという。',
+  '白石澪。死因は、薬の取り違え。……あの夜、何かを言いたそうだった瞳を、私は思い出した。'],
+  end:{id:'b7',hint:'金の流れと人殺しは別の話だ。人を殺すほどの理由は、金ではないところにある。'}},
+b8:{bg:'lounge',ch:'mio',L:[
+  '真壁|ずっと入院している君なら、館のことは誰より知っている。',
+  '澪は何も言わなかった。大きな瞳から、涙がひとつ落ちただけだった。',
+  'その夜、彼女は屋上から消えた。遺書はなかった。',
+  '私は一生、あの涙の意味を考えつづけることになる。真犯人が、まだ笑っているとも知らずに。'],
+  end:{id:'b8',hint:'彼女は犯人ではなく、目撃者だ。問いつめず、信じて待てば話してくれる。'}},
+b9:{bg:'lounge',ch:'yukari',L:[
+  '真壁|犯人は君だ、早瀬さん。',
+  'ゆかり|えーっ、あたし？　ひどいなあ先生。……証拠は？',
+  '言葉につまった。私の手の中には、決め手が足りない。',
+  'ゆかり|ね、ないでしょ。先生、つかれてるんですよ。お注射、してあげますね。',
+  '!笑顔のまま、彼女は私の首すじに手をそえた。ちくり、とした。柑橘の香りが、最後だった。'],
+  end:{id:'b9',hint:'相手は合っている。足りないのは証拠だ。必要なのは三つ――毒の入れ方、動機の記録、目撃証言。'}},
+q1:{bg:'lounge',ch:'yukari',bgm:'tension',L:[
+  '真壁|犯人は君だ、早瀬ゆかりさん。',
+  'ゆかり|えーっ、あたし？　ひどいなあ先生。……じゃあ聞かせてくださいよ。毒は、いつ、どうやって？'],
+  C:[{t:'「院長のグラスに、直接入れた」',to:'b10'},{t:'「封を切る前の瓶に、コルクごしに注射器で入れた」',to:'q2'},{t:'「夕食の料理に混ぜた」',to:'b10'}]},
+q2:{bg:'lounge',ch:'yukari',bgm:'tension',L:[
+  '真壁|コルクの中心に、針の穴があった。注射器を持ち歩いて怪しまれないのは、看護師の君だけだ。',
+  'ゆかり|……ふうん。でも、あたしが院長を殺す理由なんて、ないですよ？'],
+  C:[{t:'「遺産の分け前だ」',to:'b10'},{t:'「三年前の七月十四日。早瀬美咲さんの死だ」',to:'q3'},{t:'「横領を知られたからだ」',to:'b10'}]},
+q3:{bg:'lounge',ch:'yukari',bgm:'tension',L:[
+  '真壁|早瀬美咲。君のお姉さんだ。院長は誤診を隠し、カルテを差し替えさせた。',
+  'ゆかりの笑顔が、ゆっくりと消えた。',
+  'ゆかり|……証拠は、それだけ？　あたしが院長室に行ったって、だれが言えるの。'],
+  C:[{t:'「瓶に、君の指紋が残っている」',to:'b10'},{t:'「君は『ずっとナースステーションにいた』と言った。だが十時半、瓶を抱えた君を見た人がいる」',to:'c8'},{t:'「院長室に、君の香水が残っていた」',to:'b10'}]},
+b10:{bg:'lounge',ch:'yukari',L:[
+  'ゆかり|……先生、それ、ちがいますよ。',
+  '一瞬の沈黙。それで十分だった。場の空気が、私から離れていくのが分かった。',
+  '玲奈|先生……お疲れなのよ。少し、休まれたら。',
+  'その日の昼、橋が直る前に、私は「過労で倒れた」ことになった。腕には、覚えのない注射のあとがあった。'],
+  end:{id:'b10',hint:'推理はひとつでも外すと崩れる。自分の目で確かめたことだけを、順に並べよう。'}},
+c8:{bg:'lounge',ch:'yukari',bgm:'danger',L:[
+  '澪が、小さく手をあげた。\n「……私が、見ました」',
+  '長い沈黙のあと、ゆかりは息を吐いた。',
+  'ゆかり|……お姉ちゃんはね、あの人の誤診で死んだの。なのにカルテを書き換えて、「手は尽くした」って。',
+  'ゆかり|三年かけて、ここに入りこんだ。やっと終わったのに。……先生、なんで来ちゃったかなあ。',
+  '!彼女はポケットから注射器を取り出した。針先は、私ではなく、自分の首に向いていた。'],
+  C:[{t:'飛びかかって注射器を奪う',to:'en'},{t:'「階段で、君は泣いて謝っていた」と語りかける',to:'c9',mem:'M2'}]},
+en:{bg:'lounge',ch:'yukari',L:[
+  '私は飛びかかった。だが、彼女のほうが一瞬早かった。',
+  'ゆかり|……ごめんね、先生。肩、もっともんであげたかったな。',
+  '朝日がラウンジに差しこんだとき、事件は終わっていた。犯人は分かった。謎も解けた。',
+  'それでも私は、何かをひとつ、取りこぼした気がしてならなかった。'],
+  end:{id:'en',hint:'真相には届いた。だが、彼女を止める言葉をあなたはまだ知らない。彼女の本心が聞こえる結末が、どこかにある。'}},
+c9:{bg:'lounge',ch:'yukari',bgm:'none',L:[
+  '真壁|階段で、君は泣いて謝っていた。「ごめんなさい、先生」と。',
+  'ゆかり|……え？　なに、言って……そんなこと、あたし、まだ――',
+  '真壁|君は、人を殺して平気でいられる人間じゃない。お姉さんは、妹にそんな最期を望むだろうか。',
+  '注射器を持つ手が、震えはじめた。'],to:[['WILL','saeAlive'],'et1','eg']},
+eg:{bg:'dawn',ch:'yukari',L:[
+  '注射器が、床に落ちて転がった。',
+  'ゆかりはその場に座りこみ、声を出さずに泣いた。',
+  '橋は昼前に仮復旧した。パトカーに乗る前、彼女は一度だけふり返った。',
+  'ゆかり|……あの人、最後まで謝らなかったな。一回でいいから、聞きたかった。「すまなかった」って。',
+  'その言葉を、私は長いあいだ忘れられなかった。院長は本当に、何も遺さなかったのだろうか。'],
+  end:{id:'eg',hint:'彼女は生きて朝を迎えた。だが、まだ届いていないものがある。院長が「遺したもの」を探そう。そして今夜は、もう誰も死なせないこと。'}},
+et1:{bg:'dawn',ch:'yukari',L:[
+  '真壁|それに――君に、渡さなければならないものがある。',
+  '私は上着の内ポケットから、封筒を取り出した。院長室の金庫にあったものだ。表には「早瀬ゆかり様」。',
+  'ゆかり|……なに、それ。',
+  '「君がだれの妹か、私は一年前に気づいた。三年前の七月十四日、私は誤った。そして恐れて、記録を偽らせた」',
+  '「君がここへ来た理由も、分かっているつもりだ。私は逃げない。明日、すべてを公にする。そのために、税理士の先生を呼んだ」',
+  '「クリニックの財産はすべて、美咲さんのご遺族に遺す。金で償えるとは思わない。だが、ほかに私には何も遺せない」',
+  '「すまなかった。本当に、すまなかった」',
+  '!注射器が、床に落ちて転がった。',
+  'ゆかり|……ずるいよ。……一日、たった一日、待ってたら……。',
+  'ゆかりは子どものように声を上げて泣いた。玲奈がその肩を抱き、冴子が見えない目をしばたたかせ、澪が小さな手で背中をさすった。',
+  '橋は昼前に仮復旧した。パトカーに乗る前、ゆかりはふり返って、ほんの少しだけ笑った。',
+  'ゆかり|先生。……出てきたら、今度はちゃんと、お酒おごらせてくださいね。毒ぬきで。',
+  '霧が晴れていく。長い夜だった。私は、帳簿を閉じた。',
+  '一か月後。事務所に、一通の便りが届いた。差出人は――'],
+  C:[{t:'霧坂玲奈',to:'ep_r'},{t:'黒木冴子',to:'ep_s'},{t:'白石澪',to:'ep_m'}]},
+ep_r:{bg:'dawn',ch:'reina',L:[
+  '玲奈|お礼は、そのあとでゆっくり――そう申し上げたでしょう？',
+  '指定されたのは、海の見えるホテルのバーだった。彼女は黒いドレスで、もう白衣は着ていない。',
+  '玲奈|遺産は一円もいただかなかったわ。おかげで、生まれて初めて、自分で働くことになりそう。',
+  '玲奈|ねえ先生。開業の手続き、教えてくださる？　……今夜は、ワインに何も入れていないから。',
+  'グラスが触れあった。薔薇の香りが、ゆっくりと近づいてきた。'],
+  end:{id:'et',epi:'r',hint:'おめでとうございます。真相と、もうひとつ大事なものにたどり着きました。便りの差出人は三人います。ほかの結末も、フローチャートから探せます。'}},
+ep_s:{bg:'dawn',ch:'saeko',L:[
+  '便りではなかった。履歴書だ。',
+  '冴子|執行猶予がつきました。横領した分は、全額返します。何年かかっても。',
+  '新しい眼鏡をかけた彼女は、事務所の入口で、背筋をのばして立っていた。',
+  '冴子|数字の合わない帳簿は、もう作りません。……ここで、働かせていただけませんか。',
+  '真壁|給料は安いよ。',
+  '冴子|かまいません。……そのかわり、残業のあとは、食事に連れていってください。二人きりで。',
+  '耳まで赤くして、彼女は初めて、声を出して笑った。'],
+  end:{id:'et',epi:'s',hint:'おめでとうございます。真相と、もうひとつ大事なものにたどり着きました。便りの差出人は三人います。ほかの結末も、フローチャートから探せます。'}},
+ep_m:{bg:'dawn',ch:'mio',L:[
+  '封筒の中には、押し花が一枚。それと、たどたどしい字の手紙。',
+  '「退院しました。こわくて言えなかったことを言えたら、熱が下がったんです。ふしぎですね」',
+  'その週末、事務所のドアが控えめに叩かれた。白いガウンではなく、白いワンピースの澪が、花束を抱えて立っていた。',
+  '澪|……先生は、やっぱり、嘘をつかない人の匂いがします。',
+  '澪|町を、案内してくれませんか。私、外のこと、なにも知らないから。……手を、つないでも、いいですか。',
+  '細い指が、私の指にからんだ。外は、よく晴れていた。'],
+  end:{id:'et',epi:'m',hint:'おめでとうございます。真相と、もうひとつ大事なものにたどり着きました。便りの差出人は三人います。ほかの結末も、フローチャートから探せます。'}}
+};
+
+/* ---------- 絵：人物（図形で描いたアニメ調の上半身） ---------- */
+var SK='#f7dfd0', SKD='#e2bca6';
+function eye(cx,col){ return '<ellipse cx="'+cx+'" cy="178" rx="13" ry="14" fill="#fff"/><ellipse cx="'+cx+'" cy="180" rx="9.5" ry="12" fill="'+col+'"/><ellipse cx="'+cx+'" cy="183" rx="5" ry="7.5" fill="#1a1420"/><circle cx="'+(cx-4)+'" cy="174" r="3.4" fill="#fff"/><circle cx="'+(cx+4)+'" cy="187" r="1.7" fill="#fff" opacity=".85"/>'
+  +'<path d="M'+(cx-15)+' 173 Q'+cx+' 157 '+(cx+15)+' 173" fill="none" stroke="#2a1b1f" stroke-width="3.6" stroke-linecap="round"/><path d="M'+(cx-11)+' 193 Q'+cx+' 197 '+(cx+11)+' 193" fill="none" stroke="#b08a80" stroke-width="1.2"/>'; }
+function girl(o){
+  var h=o.hair, hd=o.hairD, s='';
+  if(o.style==='long')s+='<path d="M92 150Q88 70 150 68Q212 70 208 150L224 345Q150 366 76 345Z" fill="'+hd+'"/>';
+  else if(o.style==='wave')s+='<path d="M90 150Q86 68 150 66Q214 68 210 150Q238 200 214 250Q242 300 222 348Q150 368 78 348Q58 300 86 250Q62 200 90 150Z" fill="'+hd+'"/>';
+  else if(o.style==='bob')s+='<path d="M92 150Q88 70 150 68Q212 70 208 150L216 236Q150 256 84 236Z" fill="'+hd+'"/>';
+  else if(o.style==='down')s+='<path d="M92 150Q88 70 150 68Q212 70 208 150L220 300Q150 318 80 300Z" fill="'+hd+'"/>';
+  else s+='<path d="M94 150Q90 72 150 70Q210 72 206 150L206 204Q150 220 94 204Z" fill="'+hd+'"/><path d="M200 104Q256 112 250 200Q248 252 226 286Q236 224 212 166Z" fill="'+h+'"/>';
+  s+='<path d="M70 400Q72 322 110 302Q136 292 138 238L162 238Q164 292 190 302Q228 322 230 400Z" fill="'+SK+'"/><path d="M138 250Q150 266 162 250L162 262Q150 280 138 262Z" fill="'+SKD+'" opacity=".7"/>';
+  s+='<path d="M118 312Q135 318 146 316M182 312Q165 318 154 316" fill="none" stroke="'+SKD+'" stroke-width="1.6" stroke-linecap="round"/>';
+  var f=o.outfit;
+  if(f==='dress'){ s+='<path d="M150 342L150 366" stroke="'+SKD+'" stroke-width="1.8" stroke-linecap="round"/><path d="M70 400Q72 322 110 302L150 372L190 302Q228 322 230 400Z" fill="#7d1f38"/><path d="M110 302L150 372L190 302" fill="none" stroke="#a83a55" stroke-width="2"/>'
+    +'<path d="M62 400Q64 322 108 300L124 334L108 400Z" fill="#f2f2f4"/><path d="M238 400Q236 322 192 300L176 334L192 400Z" fill="#f2f2f4"/><path d="M108 300L124 334M192 300L176 334" stroke="#c9c9d2" stroke-width="2"/>'; }
+  else if(f==='slip'){ s+='<path d="M150 338L150 362" stroke="'+SKD+'" stroke-width="1.8" stroke-linecap="round"/><path d="M119 303L126 350M181 303L174 350" stroke="#16121c" stroke-width="3"/><path d="M88 400L102 352Q126 340 150 366Q174 340 198 352L212 400Z" fill="#16121c"/><path d="M102 352Q126 340 150 366Q174 340 198 352" fill="none" stroke="#6b4a7a" stroke-width="2"/>'; }
+  else if(f==='nurse'){ s+='<path d="M70 400Q72 322 110 302L136 290L150 334L164 290L190 302Q228 322 230 400Z" fill="#ffd9e2"/><path d="M136 290L150 334L164 290" fill="none" stroke="#e79ab0" stroke-width="2.2"/><path d="M150 334L150 400" stroke="#e79ab0" stroke-width="1.6"/><rect x="176" y="346" width="26" height="12" rx="2" fill="#fff" stroke="#e79ab0"/>'; }
+  else if(f==='blouse'){ s+='<path d="M70 400Q72 322 110 302L134 292L150 344L166 292L190 302Q228 322 230 400Z" fill="#f4f4f6"/><path d="M134 292L122 322L150 344L178 322L166 292" fill="none" stroke="#c4c6d0" stroke-width="2"/><path d="M70 400Q72 330 100 310L124 400Z" fill="#2a2f42"/><path d="M230 400Q228 330 200 310L176 400Z" fill="#2a2f42"/><circle cx="150" cy="366" r="2.6" fill="#c4c6d0"/><circle cx="150" cy="386" r="2.6" fill="#c4c6d0"/>'; }
+  else if(f==='blanket'){ s+='<path d="M56 400Q60 318 104 300Q150 330 196 300Q240 318 244 400Z" fill="#b9a27a"/><path d="M104 300Q150 330 196 300" fill="none" stroke="#8f7a56" stroke-width="3"/><path d="M90 340Q150 366 210 340" fill="none" stroke="#8f7a56" stroke-width="2" opacity=".6"/>'; }
+  else { s+='<path d="M150 336L150 352" stroke="'+SKD+'" stroke-width="1.6" stroke-linecap="round"/><path d="M70 400Q72 322 106 304L162 372L196 306Q228 322 230 400Z" fill="#cfe3f2"/><path d="M106 304L162 372L196 306" fill="none" stroke="#9dbbd3" stroke-width="2"/><path d="M162 372L150 400" stroke="#9dbbd3" stroke-width="1.6"/>'; }
+  s+='<path d="M98 150Q98 230 150 248Q202 230 202 150Q202 92 150 92Q98 92 98 150Z" fill="'+SK+'"/>';
+  s+='<ellipse cx="121" cy="207" rx="11" ry="5" fill="#ff8f8f" opacity=".3"/><ellipse cx="179" cy="207" rx="11" ry="5" fill="#ff8f8f" opacity=".3"/>';
+  s+=eye(127,o.eye)+eye(173,o.eye);
+  s+='<path d="M113 157Q127 150 141 155M159 155Q173 150 187 157" fill="none" stroke="'+hd+'" stroke-width="2.2" stroke-linecap="round"/>';
+  s+='<path d="M150 204l2 5" stroke="'+SKD+'" stroke-width="1.8" stroke-linecap="round"/>';
+  if(o.lips)s+='<path d="M141 226Q150 222 159 226Q150 236 141 226Z" fill="'+o.lips+'"/>'; else s+='<path d="M142 226Q150 233 158 226" fill="none" stroke="#b5575a" stroke-width="2.2" stroke-linecap="round"/>';
+  if(o.style==='long'||o.style==='wave'||o.style==='down')s+='<path d="M98 138Q90 204 104 266L113 262Q104 204 109 138Z" fill="'+h+'"/><path d="M202 138Q210 204 196 266L187 262Q196 204 191 138Z" fill="'+h+'"/>';
+  if(o.bang==='hime')s+='<path d="M96 152Q98 80 150 78Q202 80 204 152L196 152L196 142L104 142L104 152Z" fill="'+h+'"/>';
+  else if(o.bang==='side')s+='<path d="M96 152Q98 80 150 78Q202 80 204 152L194 132Q176 108 150 104Q126 122 112 150L104 136Z" fill="'+h+'"/>';
+  else s+='<path d="M96 152Q98 80 150 78Q202 80 204 152L190 128L180 152L165 126L150 150L135 126L120 152L108 128Z" fill="'+h+'"/>';
+  s+='<path d="M120 96Q150 84 180 96" fill="none" stroke="#fff" stroke-width="3" opacity=".22" stroke-linecap="round"/>';
+  if(o.glasses)s+='<rect x="109" y="163" width="36" height="29" rx="8" fill="rgba(255,255,255,.08)" stroke="#262a36" stroke-width="2.6"/><rect x="155" y="163" width="36" height="29" rx="8" fill="rgba(255,255,255,.08)" stroke="#262a36" stroke-width="2.6"/><path d="M145 175L155 175" stroke="#262a36" stroke-width="2.6"/>';
+  if(o.cap)s+='<path d="M112 94Q150 60 188 94L184 106Q150 84 116 106Z" fill="#fff" stroke="#f0b4c4" stroke-width="1.5"/><path d="M150 76v12M144 82h12" stroke="#e86a8a" stroke-width="3"/>';
+  if(o.ear)s+='<circle cx="98" cy="214" r="4" fill="#e6c36a"/><circle cx="202" cy="214" r="4" fill="#e6c36a"/>';
+  if(o.tear)s+='<path d="M118 196Q114 210 119 216Q124 210 118 196Z" fill="#bfe3ff" opacity=".9"/>';
+  return s;
+}
+var CH={
+  reina:girl({hair:'#6b3a2a',hairD:'#4f2a1f',style:'wave',bang:'side',eye:'#8a4b6b',outfit:'dress',lips:'#c2405a',ear:true}),
+  reina2:girl({hair:'#6b3a2a',hairD:'#4f2a1f',style:'wave',bang:'side',eye:'#8a4b6b',outfit:'slip',lips:'#c2405a',ear:true}),
+  yukari:girl({hair:'#e0a25a',hairD:'#c4863f',style:'pony',eye:'#3f9a6a',outfit:'nurse',cap:true}),
+  yukari2:girl({hair:'#e0a25a',hairD:'#c4863f',style:'down',eye:'#3f9a6a',outfit:'nurse',tear:true}),
+  saeko:girl({hair:'#2f3350',hairD:'#22263c',style:'bob',bang:'side',eye:'#4a5f9a',outfit:'blouse',glasses:true,lips:'#b8585e'}),
+  saeko2:girl({hair:'#2f3350',hairD:'#22263c',style:'bob',bang:'side',eye:'#4a5f9a',outfit:'blanket',lips:'#9a6a78'}),
+  mio:girl({hair:'#1c1a24',hairD:'#121018',style:'long',bang:'hime',eye:'#6a7fb8',outfit:'gown'})
+};
+var WHO={'玲奈':'reina','ゆかり':'yukari','冴子':'saeko','澪':'mio'};
+
+/* ---------- 絵：背景 ---------- */
+function rain(){ var s='', i; for(i=0;i<40;i++){ var x=(i*37)%300, y=(i*61)%340; s+='<path d="M'+x+' '+y+'l-6 18" stroke="#9fb4d8" stroke-width="1" opacity=".35"/>'; } return s; }
+var BG={
+  ext:'<defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1024"/><stop offset="1" stop-color="#1b2740"/></linearGradient></defs><rect width="300" height="340" fill="url(#g1)"/><path d="M190 0L172 70L190 70L166 140" fill="none" stroke="#dfe8ff" stroke-width="3" opacity=".8"/><path d="M0 250Q80 200 150 230Q230 200 300 244L300 340L0 340Z" fill="#070b16"/><path d="M96 232L96 150L130 124L164 150L164 132L212 132L212 232Z" fill="#0d1322"/><rect x="108" y="168" width="16" height="22" fill="#f1c46a"/><rect x="138" y="168" width="16" height="22" fill="#3a2f1c"/><rect x="176" y="150" width="14" height="20" fill="#f1c46a"/><rect x="176" y="190" width="14" height="20" fill="#3a2f1c"/>'+rain(),
+  lounge:'<rect width="300" height="340" fill="#2a1a16"/><rect y="230" width="300" height="110" fill="#1a100d"/><rect x="24" y="40" width="70" height="110" fill="#0d1424" stroke="#4a3226" stroke-width="5"/><path d="M59 40v110M24 95h70" stroke="#4a3226" stroke-width="3"/><rect x="190" y="110" width="90" height="120" fill="#3a2620"/><rect x="204" y="140" width="62" height="90" fill="#120a08"/><path d="M214 230Q222 180 235 200Q242 168 250 204Q258 190 258 230Z" fill="#f08a2a"/><path d="M224 230Q232 204 238 214Q244 200 248 230Z" fill="#ffd66a"/><ellipse cx="235" cy="250" rx="90" ry="26" fill="#f08a2a" opacity=".14"/><rect x="184" y="100" width="102" height="12" fill="#4a3226"/><path d="M0 300Q60 262 130 280L130 340L0 340Z" fill="#4a1f2a"/>',
+  office:'<rect width="300" height="340" fill="#16241f"/><rect y="236" width="300" height="104" fill="#0e1613"/><rect x="16" y="30" width="110" height="170" fill="#22150f"/><path d="M16 72h110M16 114h110M16 156h110" stroke="#0d0806" stroke-width="5"/><path d="M26 34v34M36 38v30M50 36v32M64 40v28M80 36v32M96 38v30M30 78v32M48 80v30M70 78v32M92 82v28M28 120v32M52 122v30M76 120v32M100 124v28" stroke="#6a4a36" stroke-width="7"/><rect x="150" y="210" width="150" height="26" fill="#3a2418"/><rect x="160" y="236" width="14" height="70" fill="#2a1a12"/><path d="M226 210L226 168L214 150L250 150L238 168L238 210Z" fill="#c9a24a"/><ellipse cx="232" cy="200" rx="70" ry="50" fill="#f1c46a" opacity=".13"/><rect x="180" y="196" width="10" height="14" fill="#7a4a1c"/><rect x="183" y="188" width="4" height="8" fill="#5a3a16"/><rect x="246" y="70" width="38" height="34" fill="#2b3530" stroke="#55655c" stroke-width="2"/><circle cx="265" cy="87" r="6" fill="none" stroke="#8fa39a" stroke-width="2"/>',
+  corridor:'<rect width="300" height="340" fill="#1a1d2a"/><path d="M0 0L110 90L110 250L0 340Z" fill="#222638"/><path d="M300 0L190 90L190 250L300 340Z" fill="#222638"/><rect x="110" y="90" width="80" height="160" fill="#0c0e16"/><path d="M0 340L110 250L190 250L300 340Z" fill="#141722"/><path d="M0 0L110 90L190 90L300 0Z" fill="#11131c"/><rect x="24" y="96" width="44" height="170" fill="#2d3248" transform="skewY(18)"/><rect x="232" y="170" width="44" height="170" fill="#2d3248" transform="skewY(-18)"/><ellipse cx="150" cy="60" rx="26" ry="8" fill="#f1e2a6" opacity=".55"/><ellipse cx="150" cy="170" rx="90" ry="110" fill="#f1e2a6" opacity=".05"/>',
+  dark:'<rect width="300" height="340" fill="#04050a"/><path d="M0 0L110 90L110 250L0 340Z" fill="#090b14"/><path d="M300 0L190 90L190 250L300 340Z" fill="#090b14"/><rect x="110" y="90" width="80" height="160" fill="#020308"/><rect x="232" y="120" width="40" height="90" fill="#1a2748" transform="skewY(-18)"/><path d="M252 70L244 100L254 100L242 130" fill="none" stroke="#b9c8ef" stroke-width="2" opacity=".7"/><path d="M190 250L300 340L120 340Z" fill="#1a2748" opacity=".25"/>',
+  basement:'<rect width="300" height="340" fill="#12161c"/><rect y="250" width="300" height="90" fill="#0a0d11"/><path d="M0 60h300M0 140h300M0 220h300M60 0v250M150 0v250M240 0v250" stroke="#1c232c" stroke-width="2"/><path d="M0 30h300" stroke="#2f3a46" stroke-width="10"/><path d="M150 0v46" stroke="#555" stroke-width="2"/><circle cx="150" cy="54" r="8" fill="#f1e2a6"/><ellipse cx="150" cy="120" rx="80" ry="100" fill="#f1e2a6" opacity=".06"/><rect x="196" y="110" width="80" height="140" fill="#27313c" stroke="#3f4d5c" stroke-width="3"/><circle cx="208" cy="182" r="5" fill="#8fa0b2"/><rect x="250" y="168" width="16" height="24" fill="#0c1014" stroke="#3f4d5c"/><path d="M0 340L0 270L30 270L30 290L60 290L60 310L90 310L90 340Z" fill="#1c232c"/>',
+  vault:'<rect width="300" height="340" fill="#0c1820"/><rect y="252" width="300" height="88" fill="#081017"/><rect x="10" y="30" width="96" height="222" fill="#15252f" stroke="#2c4352" stroke-width="3"/><path d="M10 84h96M10 140h96M10 196h96" stroke="#2c4352" stroke-width="3"/><rect x="20" y="52" width="22" height="30" fill="#3c5566"/><rect x="50" y="60" width="30" height="22" fill="#33495a"/><rect x="24" y="112" width="34" height="26" fill="#33495a"/><rect x="66" y="104" width="26" height="34" fill="#3c5566"/><rect x="22" y="166" width="60" height="28" fill="#2f4453"/><rect x="200" y="40" width="90" height="212" fill="#1b2e3a" stroke="#3a5566" stroke-width="4"/><rect x="262" y="210" width="20" height="26" fill="#0a1218" stroke="#3a5566"/><circle cx="272" cy="200" r="3" fill="#e0524a"/><path d="M120 0v30M150 0v44M176 0v24M132 0v16" stroke="#cfe6f5" stroke-width="3" opacity=".5"/><rect width="300" height="340" fill="#9fd0ee" opacity=".06"/>',
+  room:'<rect width="300" height="340" fill="#1c1a2a"/><rect y="240" width="300" height="100" fill="#12101c"/><rect x="170" y="36" width="100" height="130" fill="#0b1226" stroke="#3a3550" stroke-width="5"/><path d="M220 36v130M170 100h100" stroke="#3a3550" stroke-width="3"/><path d="M236 40L226 80L238 80L224 120" fill="none" stroke="#dfe8ff" stroke-width="2.5" opacity=".8"/><path d="M160 30Q176 100 160 172L178 172Q188 100 178 30Z" fill="#4a3558"/><path d="M280 30Q264 100 280 172L262 172Q252 100 262 30Z" fill="#4a3558"/><rect x="0" y="218" width="150" height="50" rx="8" fill="#d8d6e4"/><rect x="0" y="196" width="46" height="34" rx="8" fill="#f2f0f8"/><rect x="0" y="262" width="150" height="14" fill="#3a3550"/>',
+  roof:'<defs><linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101a36"/><stop offset=".75" stop-color="#3a4a78"/><stop offset="1" stop-color="#c98a6a"/></linearGradient></defs><rect width="300" height="340" fill="url(#g3)"/><path d="M0 232Q70 206 150 222Q230 204 300 228L300 340L0 340Z" fill="#0b1020"/><rect y="262" width="300" height="78" fill="#161a26"/><path d="M0 232h300M0 250h300" stroke="#5a6480" stroke-width="3"/><path d="M20 232v30M70 232v30M120 232v30M170 232v30M220 232v30M270 232v30" stroke="#5a6480" stroke-width="3"/><rect x="222" y="150" width="54" height="60" rx="6" fill="#1b2236"/><path d="M232 210v24M266 210v24" stroke="#1b2236" stroke-width="5"/>',
+  dawn:'<defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5a8a"/><stop offset=".6" stop-color="#f0a66a"/><stop offset="1" stop-color="#f6d79a"/></linearGradient></defs><rect width="300" height="340" fill="#2a1a16"/><rect y="236" width="300" height="104" fill="#1a100d"/><rect x="60" y="30" width="180" height="170" fill="url(#g2)" stroke="#4a3226" stroke-width="6"/><path d="M150 30v170M60 115h180" stroke="#4a3226" stroke-width="4"/><circle cx="150" cy="176" r="22" fill="#fff3c4" opacity=".9"/><path d="M60 200L240 200L300 340L0 340Z" fill="#f6d79a" opacity=".1"/>'
+};
+var DIM={dark:1,vault:1};
+var BGMUSIC={ext:'calm',lounge:'calm',room:'calm',office:'tension',corridor:'tension',basement:'tension',dark:'danger',vault:'danger',roof:'calm',dawn:'dawn'};
+
+/* ---------- 音：音楽ファイルは使えないので、音を1つずつ鳴らして曲にする ---------- */
+var muted=true, actx=null, bgm={name:'',want:'calm',step:0,next:0,gain:null,nz:null};
+var SONGS={
+  calm:{bpm:72,lead:'sine',lv:0.09,arp:0,dr:0,bs:8,ch:[[45,1],[41,0],[43,0],[40,1]],
+    mel:[69,0,0,0,72,0,0,0,76,0,0,0,72,0,0,0, 77,0,0,0,76,0,0,0,72,0,0,0,69,0,0,0, 74,0,0,0,71,0,0,0,67,0,0,0,71,0,0,0, 76,0,0,0,0,0,0,0,71,0,0,0,0,0,0,0]},
+  tension:{bpm:96,lead:'triangle',lv:0.08,arp:0.012,dr:3,bs:4,ch:[[38,1],[38,1],[34,0],[33,0]],
+    mel:[74,0,0,77,0,0,76,0,74,0,0,0,69,0,0,0, 74,0,0,77,0,0,76,0,81,0,0,0,0,0,0,0, 82,0,0,81,0,0,77,0,74,0,0,0,70,0,0,0, 73,0,0,76,0,0,81,0,0,0,79,0,76,0,73,0]},
+  danger:{bpm:150,lead:'sawtooth',lv:0.04,arp:0.018,dr:2,bs:2,ch:[[40,1],[40,1],[36,0],[38,0]],
+    mel:[76,76,0,76,0,74,76,0,79,0,76,0,74,0,71,0, 76,76,0,76,0,74,76,0,83,0,81,0,79,0,76,0, 72,72,0,72,0,76,79,0,84,0,83,0,79,0,76,0, 74,74,0,74,0,78,81,0,0,0,78,0,74,0,78,0]},
+  dawn:{bpm:80,lead:'sine',lv:0.1,arp:0.008,dr:0,bs:8,ch:[[48,0],[43,0],[45,1],[41,0]],
+    mel:[76,0,0,0,79,0,0,0,84,0,0,0,79,0,0,0, 74,0,0,0,79,0,0,0,83,0,0,0,79,0,0,0, 72,0,0,0,76,0,0,0,81,0,0,0,76,0,0,0, 72,0,0,0,77,0,0,0,81,0,0,0,84,0,0,0]}
+};
+function ac(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(actx.state==='suspended'){ try{actx.resume();}catch(e){} }
+  if(!bgm.gain){ bgm.gain=actx.createGain(); bgm.gain.gain.value=0.6; bgm.gain.connect(actx.destination); var n=(actx.sampleRate*0.6)|0, b=actx.createBuffer(1,n,actx.sampleRate), d=b.getChannelData(0); for(var i=0;i<n;i++)d[i]=Math.random()*2-1; bgm.nz=b; }
+  return actx; }
+function osc(m,t,d,type,vol,dest){ var a=actx,o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.setValueAtTime(440*Math.pow(2,(m-69)/12),t); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.015); g.gain.setValueAtTime(vol,t+d*0.6); g.gain.exponentialRampToValueAtTime(0.0008,t+d); o.connect(g); g.connect(dest||bgm.gain); o.start(t); o.stop(t+d+0.03); }
+function nz(t,d,vol,hp,dest){ var a=actx,s=a.createBufferSource(),g=a.createGain(),f=a.createBiquadFilter(); s.buffer=bgm.nz; f.type=hp>0?'highpass':'lowpass'; f.frequency.value=Math.abs(hp); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); s.connect(f); f.connect(g); g.connect(dest||bgm.gain); s.start(t); s.stop(t+d+0.02); }
+function kick(t){ var a=actx,o=a.createOscillator(),g=a.createGain(); o.frequency.setValueAtTime(170,t); o.frequency.exponentialRampToValueAtTime(48,t+0.13); g.gain.setValueAtTime(0.3,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16); o.connect(g); g.connect(bgm.gain); o.start(t); o.stop(t+0.18); }
+function bgmTick(){
+  if(muted||!actx||document.hidden){ bgm.next=0; return; }
+  try{
+    var a=actx; if(a.state==='suspended')a.resume();
+    if(bgm.want!==bgm.name){ bgm.name=bgm.want; bgm.step=0; bgm.next=0; }
+    var sg=SONGS[bgm.name]; if(!sg)return;
+    var sl=60/sg.bpm/4, now=a.currentTime; if(bgm.next<now)bgm.next=now+0.08;
+    while(bgm.next<now+0.3){ var st=bgm.step, bar=(st>>4)%sg.ch.length, q=st&15, c=sg.ch[bar], root=c[0], third=root+(c[1]?3:4), t=bgm.next, m=sg.mel[st%sg.mel.length];
+      if(m){ var len=1; while(len<8&&!sg.mel[(st+len)%sg.mel.length])len++; osc(m,t,sl*len*0.95,sg.lead,sg.lv); }
+      if(q%sg.bs===0)osc(root+12+((sg.bs===2&&(q===6||q===14))?12:0),t,sl*sg.bs*0.9,'triangle',0.15);
+      if(sg.bs>=8&&q===8)osc(third+12,t,sl*7,'triangle',0.07);
+      if(sg.arp)osc([root,third,root+7,third][q%4]+24,t,sl*0.9,'square',sg.arp);
+      if(sg.dr===2){ if(q%8===0||q===10)kick(t); if(q%8===4)nz(t,0.12,0.15,1500); if(q%2===0)nz(t,0.03,0.05,7000); }
+      else if(sg.dr===3){ if(q%4===0)nz(t,0.03,0.035,7000); if(q===0)kick(t); }
+      bgm.step=(st+1)%(sg.ch.length*16); bgm.next+=sl; }
+  }catch(e){}
+}
+setInterval(bgmTick,60);
+/* 効果音：驚き、バッドエンド、記憶、選択、正解 */
+function seSting(){ if(muted||!ac())return; try{ var t=actx.currentTime, d=actx.destination; osc(38,t,0.9,'sawtooth',0.16,d); osc(39,t,0.9,'sawtooth',0.13,d); osc(44,t,0.7,'square',0.06,d); nz(t,0.35,0.3,-900,d); }catch(e){} }
+function seBad(){ if(muted||!ac())return; try{ var t=actx.currentTime, d=actx.destination; osc(57,t,0.5,'triangle',0.14,d); osc(53,t+0.35,0.5,'triangle',0.14,d); osc(50,t+0.7,0.5,'triangle',0.14,d); osc(45,t+1.05,1.6,'triangle',0.16,d); osc(46,t+1.05,1.6,'sine',0.08,d); }catch(e){} }
+function seGood(){ if(muted||!ac())return; try{ var t=actx.currentTime, d=actx.destination; [72,76,79,84].forEach(function(m,i){ osc(m,t+i*0.16,0.9,'sine',0.12,d); }); }catch(e){} }
+function seMem(){ if(muted||!ac())return; try{ var t=actx.currentTime, d=actx.destination; osc(81,t,0.5,'sine',0.11,d); osc(88,t+0.14,0.8,'sine',0.11,d); }catch(e){} }
+function seClick(){ if(muted||!ac())return; try{ osc(76,actx.currentTime,0.07,'square',0.04,actx.destination); }catch(e){} }
+function setSnd(on){ muted=!on; $('btnSnd').textContent=on?'🎵':'🔇'; $('btnSnd2').textContent='音楽と効果音：'+(on?'入':'切'); bgm.next=0; if(on){ ac(); seClick(); } }
+$('btnSnd').onclick=function(){ setSnd(muted); }; $('btnSnd2').onclick=function(){ setSnd(muted); };
+
+/* ---------- 進行 ---------- */
+var cur=null, li=0, flags={}, curChap='', typing=null, full='', shown=0, lastChoice=null, resetSnap=null, waitChoice=false, ended=false, toastT=null;
+function count(o){ var n=0; for(var k in o)if(o[k])n++; return n; }
+function all(a){ if(typeof a==='string')return !!flags[a]; for(var i=0;i<a.length;i++)if(!flags[a[i]])return false; return true; }
+function copy(o){ return JSON.parse(JSON.stringify(o)); }
+function chapName(id){ for(var i=0;i<CHAPS.length;i++)if(CHAPS[i][0]===id)return CHAPS[i][1]; return ''; }
+function setCh(k){ var c=$('chr'); if(k&&CH[k]){ c.innerHTML=CH[k]; c.style.opacity=1; } else { c.style.opacity=0; } }
+function toast(msg){ var t=$('toast'); t.textContent=msg; t.className='on'; clearTimeout(toastT); toastT=setTimeout(function(){ t.className=''; },3200); }
+function resolve(to){ return Array.isArray(to)?(all(to[0])?to[1]:to[2]):to; }
+function scene(n){ if(n.bg){ $('bg').innerHTML=BG[n.bg]||''; $('chr').setAttribute('class',DIM[n.bg]?'dim':''); } if(n.ch!==undefined)setCh(n.ch); bgm.want=n.bgm||BGMUSIC[n.bg]||bgm.want; }
+function go(id){
+  id=resolve(id); var n=N[id]; if(!n)return;
+  if(n.reset)flags[n.reset]=0;
+  if(n.addcold)flags.cold=(flags.cold||0)+n.addcold;
+  if(n.limit&&(flags.cold||0)>=n.limit.max){ if(resetSnap)lastChoice=resetSnap; go(n.limit.to); return; }
+  cur=id; li=0; waitChoice=false; ended=false;
+  if(n.chap&&n.chap!==curChap){ curChap=n.chap; var old=save.chap[n.chap]; if(!old||count(flags)>=count(old))save.chap[n.chap]=copy(flags); save.last=n.chap; store(); }
+  if(n.reset)resetSnap={node:id,flags:copy(flags),chap:curChap};
+  $('box').className=''; $('chapName').textContent=chapName(curChap); scene(n); $('choices').innerHTML=''; line();
+}
+function line(){
+  var n=N[cur], t=n.L[li], who='', bang=false, p;
+  if(t.charAt(0)==='!'){ bang=true; t=t.slice(1); }
+  p=t.indexOf('|'); if(p>0&&p<6){ who=t.slice(0,p); t=t.slice(p+1); }
+  if(n.limit)t=t.replace('{cold}',Math.max(0,n.limit.max-(flags.cold||0)));
+  if(WHO[who]){ var base=WHO[who], nc=n.ch||''; setCh(nc.indexOf(base)===0?nc:base); }
+  if(bang){ var fx=$('fx'), sg=$('stage'); fx.className=''; sg.className=''; void fx.offsetWidth; fx.className='go'; sg.className='shake'; seSting(); }
+  $('who').textContent=who; full=who?'「'+t+'」':t; shown=0; $('txt').textContent=''; $('more').hidden=false;
+  clearInterval(typing); typing=setInterval(function(){ shown+=2; if(shown>=full.length){ shown=full.length; clearInterval(typing); typing=null; } $('txt').textContent=full.slice(0,shown); },22);
+}
+function next(){
+  if(waitChoice||ended||!cur)return;
+  if(typing){ clearInterval(typing); typing=null; $('txt').textContent=full; return; }
+  var n=N[cur];
+  if(li<n.L.length-1){ li++; line(); return; }
+  if(n.set)flags[n.set]=1;
+  if(n.mem&&!save.mem[n.mem]){ save.mem[n.mem]=1; store(); seMem(); toast('記憶を得た：'+MEM[n.mem]); }
+  if(n.C)showChoices(n);
+  else if(n.code)showCode(n);
+  else if(n.end)showEnd(n.end);
+  else if(n.to)go(n.to);
+}
+function showChoices(n){
+  waitChoice=true; $('more').hidden=true; var box=$('choices'); box.innerHTML='';
+  n.C.forEach(function(c){
+    if(c.once&&flags[c.once])return; if(c.if&&!all(c.if))return; if(c.unless&&all(c.unless))return;
+    var b=document.createElement('button'), locked=c.mem&&!save.mem[c.mem];
+    if(locked){ b.className='lock'; b.disabled=true; b.textContent='🔒 ？？？（いまの私には思いつかない）'; }
+    else { b.textContent=(c.mem?'◆ ':'')+c.t; b.onclick=function(e){ e.stopPropagation(); seClick(); lastChoice={node:cur,flags:copy(flags),chap:curChap}; if(c.once)flags[c.once]=1; if(c.set)flags[c.set]=1; if(c.cost)flags.cold=(flags.cold||0)+c.cost; go(c.to); }; }
+    box.appendChild(b);
+  });
+}
+/* 四けたの番号を入れる場面 */
+function showCode(n){
+  waitChoice=true; $('more').hidden=true; $('box').className='code'; var box=$('choices'); box.innerHTML=''; var val='';
+  var disp=document.createElement('div'); disp.className='digits'; var pad=document.createElement('div'); pad.className='pad';
+  function draw(){ disp.textContent=(val+'____').slice(0,4); }
+  ['1','2','3','4','5','6','7','8','9','消す','0','決定'].forEach(function(k){ var b=document.createElement('button'); b.textContent=k; if(k==='決定')b.className='main';
+    b.onclick=function(e){ e.stopPropagation(); seClick(); if(k==='消す'){ val=val.slice(0,-1); draw(); } else if(k==='決定'){ if(val.length<4)return; if(val===n.code.ans){ seGood(); go(n.code.ok); } else go(n.code.ng); } else if(val.length<4){ val+=k; draw(); } }; pad.appendChild(b); });
+  var c=document.createElement('button'); c.textContent='やめる'; c.onclick=function(e){ e.stopPropagation(); go(n.code.cancel); };
+  box.appendChild(disp); box.appendChild(pad); box.appendChild(c); draw();
+}
+function endInfo(id){ for(var i=0;i<ENDS.length;i++)if(ENDS[i][0]===id)return ENDS[i]; return null; }
+function progText(){ return '結末 '+count(save.ends)+' / '+ENDS.length+'　記憶 '+count(save.mem)+' / '+MKEYS.length+'　後日談 '+count(save.epi)+' / 3'; }
+function showEnd(e){
+  ended=true; var inf=endInfo(e.id), k=inf[2], newMem=e.mem&&!save.mem[e.mem];
+  save.ends[e.id]=1; if(e.mem)save.mem[e.mem]=1; if(e.epi)save.epi[e.epi]=1; store();
+  bgm.want=k==='t'?'dawn':'none'; if(k==='b')seBad(); else if(k==='t'||k==='g')seGood();
+  $('endKind').textContent=KIND[k]; $('endKind').style.color=KCOL[k];
+  $('endTitle').textContent='「'+inf[3]+'」';
+  var m=$('endMem'); m.hidden=!e.mem; if(e.mem)m.innerHTML=(newMem?'<b>新しい記憶を得た</b><br>':'<b>記憶</b>（すでに持っている）<br>')+MEM[e.mem];
+  $('endHint').innerHTML='<b>'+(k==='t'?'あとがき':'ヒント')+'</b><br>'+e.hint+'<br><span style="color:var(--dim)">'+progText()+'</span>';
+  $('btnRetry').hidden=!lastChoice; $('ovEnd').hidden=false;
+}
+function startNew(){ flags={}; curChap=''; lastChoice=null; hideAll(); go('p0'); }
+function jump(ch){ flags=copy(save.chap[ch]||{}); curChap=''; lastChoice=null; hideAll(); go(ch==='c7'&&flags.saeDead?'c7d':ch); }
+function hideAll(){ $('ovTitle').hidden=true; $('ovEnd').hidden=true; $('ovFlow').hidden=true; }
+function showTitle(){ hideAll(); bgm.want='calm'; $('btnCont').disabled=!save.last; $('prog').textContent=progText(); $('ovTitle').hidden=false; }
+var wipeStep=0;
+function showFlow(){
+  var f=$('flow'); f.innerHTML='';
+  CHAPS.forEach(function(c){
+    var row=document.createElement('div'); row.className='ch'; var b=document.createElement('button'), ok=!!save.chap[c[0]];
+    b.textContent=ok?c[1]:'？？？（まだたどり着いていない）'; b.disabled=!ok; b.onclick=function(){ jump(c[0]); }; row.appendChild(b); f.appendChild(row);
+    ENDS.forEach(function(e){ if(e[1]!==c[0])return; var d=document.createElement('div'), seen=!!save.ends[e[0]]; d.className='en'+(seen?' seen':'');
+      d.innerHTML='<span class="tag '+e[2]+'">'+KSHORT[e[2]]+'</span>'+(seen?e[3]:'？？？'); f.appendChild(d); });
+  });
+  var ml=''; MKEYS.forEach(function(k,i){ ml+=(i?'<br>':'')+(save.mem[k]?'◆ '+MEM[k]:'◇ ？？？'); }); $('memList').innerHTML=ml;
+  wipeStep=0; $('btnWipe').textContent='記録をすべて消す';
+  $('ovEnd').hidden=true; $('ovFlow').hidden=false;
+}
+$('box').onclick=next; $('stage').onclick=next;
+window.addEventListener('keydown',function(e){ if((e.key===' '||e.key==='Enter')&&$('ovTitle').hidden&&$('ovEnd').hidden&&$('ovFlow').hidden){ e.preventDefault(); next(); } });
+$('btnStart').onclick=startNew;
+$('btnCont').onclick=function(){ if(save.last)jump(save.last); };
+$('btnFlow').onclick=showFlow; $('btnFlow2').onclick=showFlow; $('btnEndFlow').onclick=showFlow;
+$('btnFlowClose').onclick=function(){ $('ovFlow').hidden=true; if(!cur||ended)showTitle(); };
+$('btnEndTitle').onclick=showTitle;
+$('btnRetry').onclick=function(){ if(!lastChoice)return; var lc=lastChoice; flags=copy(lc.flags); curChap=lc.chap; hideAll(); cur=lc.node; var n=N[cur]; li=n.L.length-1; ended=false; waitChoice=false;
+  $('chapName').textContent=chapName(curChap); scene(n); $('choices').innerHTML=''; line(); };
+$('btnWipe').onclick=function(){ if(wipeStep===0){ wipeStep=1; this.textContent='本当に消す？　もう一度押すと消えます'; return; } save={mem:{},ends:{},chap:{},epi:{},last:null}; store(); cur=null; showTitle(); };
+/* 点検用 */
+window.__k={N:N,ENDS:ENDS,save:function(){return save;},flags:function(){return flags;},cur:function(){return cur;},go:go,next:next,start:startNew,jump:jump,bgm:bgm,
+  opts:function(){ return Array.prototype.map.call($('choices').querySelectorAll('button'),function(b){return (b.disabled?'[x]':'')+b.textContent;}); },
+  skip:function(){ var g=0; while(!waitChoice&&!ended&&g++<600)next(); return cur; }};
+showTitle();
+})();
+</script>
+<script>
+(function(){ var host=document.getElementById('ovTitle'); if(!host)return; var box=host.querySelector('.in')||host;
+  var a=document.createElement('a'); a.href='./'; a.textContent='← ゲーム一覧へもどる';
+  a.style.cssText='display:block;margin:10px auto 0;padding:10px 14px;max-width:440px;text-align:center;border:1px solid rgba(255,255,255,.28);border-radius:10px;color:inherit;text-decoration:none;font-size:14px;opacity:.85';
+  box.appendChild(a);
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); } })();
+</script></body></html>

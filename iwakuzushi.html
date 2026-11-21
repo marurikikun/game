@@ -1,0 +1,901 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>ガラガラ岩くずし</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ゲーム"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#101820"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-180.png"><link rel="manifest" href="manifest.json"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}body{margin:0;font-size:14px}[hidden]{display:none!important}</style></head><body><title>ガラガラ岩くずし</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* レイアウト：1画面のゲーム。上に目標と手数、まん中に坑道（キャンバス）、下に大きなボタン。暗い坑道の一色づくり。 */
+:root{
+  color-scheme: dark;
+  --bg:#17120f;        /* 坑道のやみ */
+  --panel:#2a211b;     /* 板 */
+  --panel-2:#3a2e25;
+  --line:#5a4838;
+  --fg:#f3e9dc;        /* 文字 */
+  --fg-dim:#bfae9a;
+  --gold:#f2c14e;      /* 金のつぶ */
+  --ok:#7fd08a;
+  --ng:#f08a6c;
+  --gas:#b071e6;
+  --font: "Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:6px;box-sizing:border-box;overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:6px;position:relative}
+.hud{display:flex;align-items:stretch;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.hud .st{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.hud .st b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud .st span{font-size:14px;color:var(--fg-dim)}
+.hud .goals{display:flex;flex-direction:column;justify-content:center;gap:2px;font-size:16px;font-weight:700;white-space:nowrap}
+.hud .goals .done{color:var(--ok)}
+.hud .goals i{font-style:normal;color:var(--gold)}
+.hud .mv{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;background:var(--panel-2);border-radius:8px;padding:2px 6px}
+.hud .mv small{font-size:12px;color:var(--fg-dim)}
+.hud .mv b{font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.hud .mv b.low{color:var(--ng)}
+#goalLine{font-size:16px;font-weight:700;text-align:center;color:var(--gold);min-height:22px}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+canvas{display:block;border-radius:8px;border:2px solid var(--line);touch-action:none;background:#1c1613}
+.bar{display:flex;gap:6px}
+button{font-family:var(--font);font-size:16px;font-weight:700;color:var(--fg);background:var(--panel-2);border:1px solid var(--line);
+  border-radius:10px;padding:12px 6px;cursor:pointer;touch-action:manipulation}
+button:active{transform:translateY(1px);filter:brightness(1.2)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.bar button{flex:1;min-width:0}
+.bar #btnSnd{flex:0 0 56px}
+.bar button.main{font-size:16px}
+button.main{background:var(--gold);color:#2a1c05;border-color:#ffe29a;font-size:19px}
+.ov{position:absolute;inset:0;background:rgba(15,11,9,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:14px;border-radius:10px;z-index:5;overflow-y:auto}
+.ov h1{font-size:30px;margin:0;color:var(--gold);letter-spacing:.04em;text-wrap:balance;text-align:center}
+.ov h2{font-size:28px;margin:0;text-align:center}
+.ov p{font-size:17px;line-height:1.7;margin:0;text-align:center;max-width:22em}
+.ov .sub{color:var(--fg-dim);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%;max-width:420px}
+.grid button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;text-align:left}
+.grid button .n{font-size:13px;color:var(--fg-dim)}
+.grid button .t{font-size:16px}
+.grid button .s{font-size:16px;color:var(--gold);letter-spacing:2px}
+.grid button:disabled{opacity:.4;cursor:default}
+.themes{width:100%;max-width:420px}
+.themes button{font-size:15px;padding:10px 4px}
+.themes button.main{font-size:15px}
+.ov#ovMenu{justify-content:flex-start;gap:8px}
+.stars{font-size:44px;color:var(--gold);letter-spacing:6px}
+.col{display:flex;flex-direction:column;gap:8px;width:100%;max-width:320px}
+ol.how{font-size:16px;line-height:1.55;margin:0;padding-left:1.4em;max-width:21em}
+ol.how li{margin-bottom:6px}
+ol.how b{color:var(--gold)}
+</style>
+
+<div id="app">
+  <div class="hud">
+    <div class="st"><b id="stName">ステージ</b><span id="stNo"></span></div>
+    <div class="goals"><span id="gGold"></span><span id="gMole"></span></div>
+    <div class="mv"><small>フクロウまで</small><b id="mv">0</b><small>秒</small></div>
+  </div>
+  <div id="goalLine"></div>
+  <div id="stage"><canvas id="cv" width="360" height="546"></canvas></div>
+  <div class="bar">
+    <button id="btnMenu">ステージ</button>
+    <button id="btnRetry">やりなおし</button>
+    <button id="btnHow">あそびかた</button>
+    <button id="btnSnd" aria-label="音の入・切">🔇</button>
+  </div>
+
+  <div class="ov" id="ovMenu">
+    <h1>ガラガラ岩くずし</h1>
+    <p class="sub">フクロウにつかまる前に、モグさんを出口へ！</p>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="ov" id="ovHow" hidden>
+    <h2>あそびかた</h2>
+    <ol class="how">
+      <li>ブロックを<b>となりへスライド</b>。同じ色が<b>たて・よこに3つ以上</b>ならぶと消えます。何回動かしてもOK。</li>
+      <li>上から<b>フクロウ</b>がおりてきます。つかまる前に、もぐらの<b>モグさん</b>を下の出口（▼）へ！</li>
+      <li><b>4つ</b>そろえると<b>バクダン</b>、5つ以上やL字で<b>大バクダン</b>。タップで<b>ドカン！</b></li>
+      <li>バクダンがばくはつすると、フクロウは<b>びっくりして上へもどります</b>。</li>
+      <li>ささえがなくなると、岩が<b>ザラザラ落ちて</b>きます。金のつぶはおまけの点数です。</li>
+    </ol>
+    <div class="col"><button class="main" id="btnHowOk">はじめる</button></div>
+  </div>
+
+  <div class="ov" id="ovEnd" hidden>
+    <h2 id="endTitle"></h2>
+    <div class="stars" id="endStars"></div>
+    <p id="endMsg"></p>
+    <div class="col">
+      <button class="main" id="btnNext">つぎのステージへ</button>
+      <button id="btnAgain">もういちど</button>
+      <button id="btnToMenu">ステージをえらぶ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var COLS=9, ROWS=13, S=40, W=360, H=520, STRIP=26, CH=546, MAXC=260, fallThr=3, restThr=5;
+
+/* 記号： # かべ / a b c d 色ブロック / S 石（消せない） / W 木ばこ（となりを消すとこわれる）
+          o 岩 / m 岩＋金すこし / G 岩＋金たっぷり / M モグさん / . 空き */
+var LEVELS=[
+ {name:'はじめの岩くずし', owl:16, goal:'フクロウより先に モグさんを出口へ！',
+  map:['.........','.........','.........','....M....','mmmmmmmmm','mmmmmmmmm','mmmmmmmmm','mmmmmmmmm',
+       'aaabbbccc','aaabbbccc','###bbb###','###bbb###','###bbb###']},
+ {name:'ふたつの部屋', owl:14, goal:'モグさんの下を どんどん消そう',
+  map:['.........','..M......','mmmm#mmmm','mmmm#mmmm','mmmm#mmmm','mmmm#mmmm','aabb#ccaa','abba#caac',
+       'aabb#ccaa','#bab#acc#','##ab#ab##','##bb#aa##','##ba#ba##']},
+ {name:'モグさんをおろせ', owl:16, goal:'まっすぐ下へ！ 急げ急げ',
+  map:['.........','.........','....M....','##aabcc##','##abbca##','##ccaab##','##cabbb##','##aacca##',
+       '##bbcaa##','##bacbb##','##aaccb##','###bab###','###aab###']},
+ {name:'よこ穴をぬけて', th:0, owl:13, goal:'モグさんは出口へ歩き、岩もほります',
+  map:['.........','.M.......','ooo######','ooo######','aab######','abb######','ccb######','cca######',
+       'aacbbcca#','#######a#','#######b#','#######b#','#######b#']},
+ {name:'かたい石', owl:13, goal:'石はバクダンでこわせます',
+  map:['.........','....M....','mmmmmmmmm','mmmmmmmmm','mmmmmmmmm','mmmmmmmmm','abSccSbaa','aabcSbbac',
+       'bSaccabSc','bbaaScbbc','#abbcca##','##acbba##','###bSa###']},
+ {name:'フクロウがきた', th:2, owl:15, goal:'バクダンでフクロウを追いかえせ！',
+  map:['.........','....M....','#ooooooo#','#ooooooo#','#abcabca#','#aabbcca#','#cabbacb#','#ccabbcb#',
+       '##bacab##','##aaccb##','###bca###','###bba###','####a####']},
+ {name:'木ばこのたな', owl:13, goal:'木ばこは となりを消すとこわれます',
+  map:['....M....','GGGoooGGG','GGGoooGGG','WWWaabWWW','###abb###','###ccc###','###aab###','##aabbc##',
+       '##cabcc##','##ccbaa##','###bba###','###cab###','###cab###']},
+ {name:'金とモグさん', th:0, owl:12, lead:25, goal:'左上から出口まで 道をひらこう',
+  map:['.........','M........','aammmmmmm','abmmmmmmm','bbmmmmmmm','##abcabca','##aabbcca','##cabbacb',
+       '##ccabbcb','###acab##','###accb##','####ca###','####cb###']},
+ {name:'じぐざぐ坑道', th:2, owl:11, lead:25, goal:'右へ左へ。フクロウがせまる！',
+  map:['.........','.......M.','mmmmmmabb','mmmmmmaab','######bab','abcabcbba','aabbccaab','cab######',
+       'ccaabbcab','cbbaccbba','######aab','######bab','#######a#']},
+ {name:'大くずれ', owl:14, lead:25, goal:'ここからが本番。バクダンを作ろう',
+  map:['.........','M.....GGG','abmmm#GGG','aammm#GGG','bbmmm#WWW','##abcabca','##aabbccS','##cabbacb',
+       '##ccabbcb','###acab##','###bccb##','####ca###','####cb###']},
+ /* ここから小さいブロックの大量ステージ（12列×17段） */
+ {name:'こまかい岩場', owl:13, lead:20, colors:4, goal:'ブロックが小さくなった！ どんどん消そう',
+  map:['............','.....M......','mmmmmmmmmmmm','mmmmmmmmmmmm','mmmmmmmmmmmm','aaaaaaaaaaaa','aaaaaaaaaaaa','aaaaaaaaaaaa','aaaaaaaaaaaa',
+       'aaaaaaaaaaaa','#aaaaaaaaaa#','#aaaaaaaaaa#','##aaaaaaaa##','##aaaaaaaa##','###aaaaaa###','####aaaa####','#####aa#####']},
+ {name:'三つのへや', owl:12, lead:25, colors:4, th:0, goal:'かべの下をぬけて まん中の出口へ',
+  map:['............','..M.........','ooo#mmmm#GGG','ooo#mmmm#GGG','aaa#mmmm#GGG','aaa#aaaa#WWW','aaa#aaaa#aaa','aaaaaaaaaaaa','aaaaaaaaaaaa',
+       'aaaaSaaSaaaa','aaaaaaaaaaaa','#aaaaaaaaaa#','#aaaaaaaaaa#','##aaaaaaaa##','###aaaaaa###','####aaaa####','#####aa#####']},
+ {name:'大じぐざぐ', owl:10, lead:30, colors:4, th:2, goal:'長い道のり。バクダンで時間をかせごう',
+  map:['............','..........M.','mmmmmmmmaaaa','mmmmmmmmaaaa','########aaaa','aaaaaaaaaaaa','aaaaaaaaaaaa','aaaaaaaaaaaa','aaaa########',
+       'aaaaaaaaaaaa','aaaaaaaaaaaa','aaaaaaaaaaaa','########aaaa','########aaaa','########aaaa','#########aa#','#########aa#']},
+ {name:'氷の大くずれ', owl:11, lead:30, colors:4, goal:'さいごの大勝負。全部くずせ！',
+  map:['............','M...........','aammmmmmmmGG','aammmmmmmmGG','aammmmmmmmGG','##aaaaaaaaWW','##aaaaaaaaaa','##aaSaaaaSaa','##aaaaaaaaaa',
+       'aaaaaaaaaaaa','aaaaaa##aaaa','aaaaaa##aaaa','#aaaaaaaaaa#','#aaaaaaaaaa#','##aaaaaaaa##','###aaaaaa###','####aaaa####']}
+];
+
+/* ---------- 保存 ---------- */
+var KEY='garagara_iwakuzushi_v1';
+var save={stars:[],how:false};
+try{var raw=localStorage.getItem(KEY); if(raw){var o=JSON.parse(raw); if(o&&o.stars){save.stars=o.stars; save.how=!!o.how;}}}catch(e){}
+function store(){try{localStorage.setItem(KEY,JSON.stringify(save));}catch(e){}}
+function unlocked(i){return true;}
+
+/* 見た目のサンプル3種類 */
+var THEMES=[
+ {name:'坑道',   bg0:'#2b2520',bg1:'#15110e',wall0:'#75624f',wall1:'#5a4a3b',strip:'#3d3229',pebs:['#8b8a88','#77736f','#9a958e','#6a6763','#857c73']},
+ {name:'氷のどうくつ',bg0:'#1c2c3a',bg1:'#0c151e',wall0:'#7fa3bb',wall1:'#55788f',strip:'#34495a',pebs:['#b9c9d6','#9fb3c4','#cfdbe4','#8fa5b8','#aebfce']},
+ {name:'砂の遺跡', bg0:'#3a2f1f',bg1:'#1b150c',wall0:'#c7a56b',wall1:'#a07f4a',strip:'#5d4a2b',pebs:['#b49a78','#9c8262','#c4ad8c','#8b7355','#a89070']}
+];
+var thIdx=0; try{thIdx=Math.max(0,Math.min(2,parseInt(localStorage.getItem(KEY+'_theme'),10)||0));}catch(e){}
+var TH=THEMES[thIdx];
+
+/* ---------- 音（はじめは切） ---------- */
+var muted=true, actx=null, lastTick=0;
+function tone(f,d,type,vol,slide){
+  if(muted) return;
+  try{
+    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+    var t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(f,t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,t+d);
+    g.gain.setValueAtTime(vol||0.12,t); g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+d+0.02);
+  }catch(e){}
+}
+function sPop(n){tone(260+Math.min(n,10)*30,0.16,'triangle',0.16,120);}
+var SONGS=(function(){
+  var ch=[[48,0],[45,1],[41,0],[43,0],[48,0],[45,1],[41,0],[43,0]],
+    mel=[76,0,79,0,84,0,79,0,76,0,79,0,0,0,0,0, 76,0,81,0,84,0,81,0,76,0,81,0,0,0,0,0, 77,0,81,0,84,0,81,0,77,0,81,0,79,0,77,0, 74,0,79,0,83,0,79,0,74,0,0,0,79,0,0,0,
+         84,0,0,0,79,0,76,0,79,0,0,0,84,0,86,0, 88,0,0,0,84,0,81,0,84,0,0,0,81,0,0,0, 77,0,81,0,84,0,89,0,88,0,84,0,81,0,0,0, 79,0,83,0,86,0,0,0,83,0,79,0,0,0,0,0];
+  return {play:{bpm:116,lead:'triangle',lv:0.085,arp:0.009,dr:1,ch:ch,mel:mel},menu:{bpm:92,lead:'sine',lv:0.085,arp:0,dr:0,ch:ch,mel:mel}};
+})();
+function bgmWant(){ return (status==='menu'||status==='end')?'menu':'play'; }
+/* ===== BGM：音楽ファイルは使えないので、音を1つずつ鳴らして曲にする =====
+   曲は「16分音符ごとの音の高さ」の表。ch=1小節ごとの和音[根音,短調なら1]、mel=メロディ（0は休み） */
+var bgm={off:true,name:'',step:0,next:0,gain:null,nz:null};
+function bgmOsc(m,t,d,type,vol){ var a=actx,o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.setValueAtTime(440*Math.pow(2,(m-69)/12),t); g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+0.012); g.gain.setValueAtTime(vol,t+d*0.6); g.gain.exponentialRampToValueAtTime(0.0008,t+d); o.connect(g); g.connect(bgm.gain); o.start(t); o.stop(t+d+0.03); }
+function bgmNz(t,d,vol,hp){ var a=actx,s=a.createBufferSource(),g=a.createGain(),f=a.createBiquadFilter(); s.buffer=bgm.nz; f.type='highpass'; f.frequency.value=hp; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); s.connect(f); f.connect(g); g.connect(bgm.gain); s.start(t); s.stop(t+d+0.02); }
+function bgmKick(t){ var a=actx,o=a.createOscillator(),g=a.createGain(); o.frequency.setValueAtTime(170,t); o.frequency.exponentialRampToValueAtTime(48,t+0.13); g.gain.setValueAtTime(0.32,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.16); o.connect(g); g.connect(bgm.gain); o.start(t); o.stop(t+0.18); }
+function bgmTick(){
+  if(muted||bgm.off||!actx||document.hidden){ bgm.next=0; return; }
+  try{
+    var a=actx; if(a.state==='suspended')a.resume();
+    if(!bgm.gain){ bgm.gain=a.createGain(); bgm.gain.gain.value=0.55; bgm.gain.connect(a.destination); var n=(a.sampleRate*0.3)|0, b=a.createBuffer(1,n,a.sampleRate), d=b.getChannelData(0); for(var i=0;i<n;i++)d[i]=Math.random()*2-1; bgm.nz=b; }
+    var want=bgmWant(); if(want!==bgm.name){ bgm.name=want; bgm.step=0; bgm.next=0; }
+    var sg=SONGS[bgm.name]; if(!sg)return;
+    var sl=60/sg.bpm/4, now=a.currentTime; if(bgm.next<now)bgm.next=now+0.06;
+    while(bgm.next<now+0.3){ var st=bgm.step, bar=(st>>4)%sg.ch.length, q=st&15, c=sg.ch[bar], root=c[0], third=root+(c[1]?3:4), t=bgm.next, m=sg.mel[st%sg.mel.length];
+      if(m){ var len=1; while(len<6&&!sg.mel[(st+len)%sg.mel.length])len++; bgmOsc(m,t,sl*len*0.95,sg.lead,sg.lv); }
+      if(q%2===0)bgmOsc(root+12+((q===6||q===14)?12:0),t,sl*1.8,'triangle',0.16);
+      if(sg.arp)bgmOsc([root,third,root+7,third][q%4]+24,t,sl*0.9,'square',sg.arp);
+      if(sg.dr){ if(q%8===0||(sg.dr>1&&q===10))bgmKick(t); if(q%8===4)bgmNz(t,0.12,0.16,1500); if(q%2===0)bgmNz(t,0.03,sg.dr>1?0.06:0.035,7000); }
+      bgm.step=(st+1)%(sg.ch.length*16); bgm.next+=sl; }
+  }catch(e){}
+}
+setInterval(bgmTick,60);
+function sGold(){var n=performance.now(); if(n-lastTick<45)return; lastTick=n; tone(1300+Math.random()*500,0.07,'sine',0.07);}
+function sNo(){tone(140,0.1,'square',0.05);}
+function sWin(){[523,659,784,1047].forEach(function(f,i){setTimeout(function(){tone(f,0.25,'triangle',0.15);},i*120);});}
+function sFail(){tone(300,0.5,'sawtooth',0.08,90);}
+
+/* ---------- 状態 ---------- */
+var MAXP=1400;
+var px=new Float32Array(MAXP),py=new Float32Array(MAXP),ox=new Float32Array(MAXP),oy=new Float32Array(MAXP),
+    pr=new Float32Array(MAXP),ang=new Float32Array(MAXP),kind=new Uint8Array(MAXP),alive=new Uint8Array(MAXP),
+    contact=new Uint8Array(MAXP),spr=new Uint8Array(MAXP);
+var n=0, mole=-1, moleDir=0, moleFace=1, moleGround=false, rescued=false;
+var tiles=new Uint8Array(MAXC), voff=new Float32Array(MAXC), shake=new Uint8Array(MAXC);
+var sox=new Float32Array(MAXC), soy=new Float32Array(MAXC), swapAnim=0, chain=0, sel=-1, hammer=false, down=null;
+var cnt=new Uint16Array(MAXC), moleBlk=new Uint8Array(MAXC);
+var lv=0, L=null, moves=0, goldTotal=0, goldNeed=0, goldGot=0, gasY=-999, gasOn=false;
+var status='menu', reason='', quiet=0, active=0, frameNo=0, endTimer=0, settling=false, falling=false, exits=[];
+var fx=[];
+var HC=12, HW=Math.ceil(W/HC), HH=Math.ceil((H+72)/HC);
+var hs=new Int32Array(HW*HH+1), hi=new Int32Array(MAXP), hcell=new Int32Array(MAXP);
+var G=0.076, VMAX=4.0, EPS2=0.046*0.046;
+
+function rng32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function chAt(map,x,y){var c=Math.floor(x/S),r=Math.floor(y/S); if(c<0||c>=COLS||r<0||r>=ROWS)return '#'; return map[r].charAt(c);}
+
+function loadLevel(i){
+  lv=i; L=LEVELS[i];
+  /* 遊ぶたびに、色のならび・金のつぶの場所・左右の向きを変える */
+  var playSeed=(Math.random()*1e9)|0;
+  if(Math.random()<0.5){ L=Object.assign({},L); L.map=L.map.map(function(row){return row.split('').reverse().join('');}); }
+  ROWS=L.map.length; COLS=L.map[0].length; S=W/COLS; H=ROWS*S; STRIP=CH-H; fallThr=S>=40?3:2; restThr=S>=40?5:3;
+  TH=THEMES[L.th===undefined?1:L.th]; buildSprites();
+  n=0; mole=-1; moleDir=0; moleFace=1; rescued=false; fx.length=0;
+  goldGot=0; goldTotal=0; moves=9999; quiet=0; winSecs=0; owlHit=0; frameNo=0; endTimer=0; reason='';
+  var map=L.map, r,c,ch;
+  for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++){
+    ch=map[r].charAt(c); var t=0;
+    if(ch==='#')t=1; else if(ch>='a'&&ch<='d')t=8; else if(ch==='S')t=6; else if(ch==='W')t=7;
+    tiles[r*COLS+c]=t; voff[r*COLS+c]=0; shake[r*COLS+c]=0; sox[r*COLS+c]=0; soy[r*COLS+c]=0;
+  }
+  /* 色は決まった乱数でならべる。最初から3つそろっていない・動かせる手がある配置にする */
+  var ph=[], nc=L.colors||3, tryNo=0, kk;
+  for(kk=0;kk<COLS*ROWS;kk++) if(tiles[kk]===8)ph.push(kk);
+  do{
+    var rc=rng32((4321+i*31+tryNo*7+playSeed)|0);
+    for(var pi=0;pi<ph.length;pi++){ kk=ph[pi]; c=kk%COLS; r=(kk/COLS)|0; var pick, guard=0;
+      do{ pick=2+Math.floor(rc()*nc); guard++; }
+      while(guard<20&&((c>=2&&tiles[kk-1]===pick&&tiles[kk-2]===pick)||(r>=2&&tiles[kk-COLS]===pick&&tiles[kk-2*COLS]===pick)));
+      tiles[kk]=pick;
+    }
+  }while(findMoves().length<3&&++tryNo<40);
+  sel=-1; down=null; swapAnim=0; chain=0; setHammer(false);
+  exits=[]; for(c=0;c<COLS;c++) if(tiles[(ROWS-1)*COLS+c]!==1) exits.push(c);
+  var rnd=rng32((1234+i*97+playSeed)|0), row=0, x,y, ok='omG.M';
+  for(y=6;y<H;y+=10.4,row++){
+    for(x=6+(row%2?5.8:0);x<W-5;x+=11.6){
+      ch=chAt(map,x,y); if(ch!=='o'&&ch!=='m'&&ch!=='G')continue;
+      if(ok.indexOf(chAt(map,x-5.8,y-5.8))<0||ok.indexOf(chAt(map,x+5.8,y-5.8))<0||ok.indexOf(chAt(map,x-5.8,y+5.8))<0||ok.indexOf(chAt(map,x+5.8,y+5.8))<0)continue;
+      if(n>=MAXP-2)break;
+      var ratio=ch==='o'?0:(ch==='m'?0.22:0.6);
+      px[n]=ox[n]=x+(rnd()-0.5)*0.5; py[n]=oy[n]=y; pr[n]=4.3+rnd()*1.3; ang[n]=rnd()*6.28;
+      kind[n]=rnd()<ratio?1:0; spr[n]=Math.floor(rnd()*5); alive[n]=1; if(kind[n])goldTotal++; n++;
+    }
+  }
+  for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++) if(map[r].charAt(c)==='M'){
+    mole=n; px[n]=ox[n]=c*S+S/2; py[n]=oy[n]=r*S+S-13.5; pr[n]=13; kind[n]=2; alive[n]=1; ang[n]=0; n++;
+  }
+  goldNeed=L.gold?Math.max(1,Math.floor(goldTotal*L.gold)):0;
+  gasOn=mole>=0; gasY=-110; owlX=W/2;
+  settling=true; for(var k=0;k<100;k++) frame(); settling=false;
+  if(mole>=0){ owlStart=py[mole]-18-(L.lead||15)*L.owl; gasY=owlStart; owlX=px[mole]; }
+  fx.length=0; quiet=0; frameNo=0; idle=0; moleStill=false; moleStuck=false;
+  status='playing';
+  drawBg(); updateHud();
+}
+
+/* ---------- 物理 ---------- */
+function solid(c,r){ if(c<0||c>=COLS)return true; if(r<0||r>=ROWS)return false; return tiles[r*COLS+c]!==0; }
+
+function tileCollide(i){
+  var x=px[i], y=py[i], r=pr[i];
+  if(x<r){x=r;contact[i]=1;} else if(x>W-r){x=W-r;contact[i]=1;}
+  if(y<r-40){y=r-40;}
+  var c0=Math.floor((x-r)/S), c1=Math.floor((x+r)/S), r0=Math.floor((y-r)/S), r1=Math.floor((y+r)/S), c,rr;
+  for(rr=r0;rr<=r1;rr++){ if(rr<0||rr>=ROWS)continue;
+    for(c=c0;c<=c1;c++){ if(c<0||c>=COLS)continue; if(tiles[rr*COLS+c]===0)continue;
+      var x0=c*S, y0=rr*S, cx=x<x0?x0:(x>x0+S?x0+S:x), cy=y<y0?y0:(y>y0+S?y0+S:y);
+      var dx=x-cx, dy=y-cy, d2=dx*dx+dy*dy;
+      if(d2>=r*r)continue;
+      if(d2>1e-6){
+        var d=Math.sqrt(d2), p=(r-d)/d; x+=dx*p; y+=dy*p; contact[i]=1;
+        if(i===mole&&dy<0&&-dy>Math.abs(dx)*0.7)moleGround=true;
+      }else{
+        /* 中心がブロックの中：いちばん近い空いた面へ押し出す。出口がなければ岩はくだける */
+        var best=1e9, bx=x, by=y, dd;
+        if(!solid(c,rr-1)){dd=y-y0; if(dd<best){best=dd;bx=x;by=y0-r;}}
+        if(!solid(c-1,rr)){dd=x-x0; if(dd<best){best=dd;bx=x0-r;by=y;}}
+        if(!solid(c+1,rr)){dd=x0+S-x; if(dd<best){best=dd;bx=x0+S+r;by=y;}}
+        if(!solid(c,rr+1)){dd=y0+S-y; if(dd<best){best=dd;bx=x;by=y0+S+r;}}
+        if(best<1e9){x=bx;y=by;contact[i]=1;}
+        else if(i===mole){y=y0-r;}
+        else{alive[i]=0; if(kind[i]===1){goldTotal--;} px[i]=x;py[i]=y; return;}
+      }
+    }
+  }
+  px[i]=x; py[i]=y;
+}
+
+function substep(){
+  var i,j,k,vx,vy,v2,s,dx,dy,d2,d,rr,ov,nx,ny,w;
+  for(i=0;i<n;i++){ if(!alive[i])continue;
+    vx=px[i]-ox[i]; vy=py[i]-oy[i]+G; v2=vx*vx+vy*vy;
+    if(v2>VMAX*VMAX){s=VMAX/Math.sqrt(v2);vx*=s;vy*=s;}
+    ox[i]=px[i]; oy[i]=py[i]; px[i]+=vx; py[i]+=vy; contact[i]=0;
+  }
+  if(mole>=0&&alive[mole]){
+    if(moleGround){
+      var hv=(px[mole]-ox[mole])*0.7; px[mole]=ox[mole]+hv;
+      if(moleDir!==0&&!settling&&status==='playing'){px[mole]+=moleDir*0.45; ox[mole]+=moleDir*0.45; moleFace=moleDir;}
+    }
+    moleGround=false;
+  }
+  /* 近くの岩だけ調べるための区画分け */
+  var cells=HW*HH;
+  for(k=0;k<=cells;k++)hs[k]=0;
+  for(i=0;i<n;i++){ if(!alive[i]||i===mole){hcell[i]=-1;continue;}
+    var hx=Math.floor(px[i]/HC), hy=Math.floor((py[i]+36)/HC);
+    if(hx<0)hx=0; else if(hx>=HW)hx=HW-1; if(hy<0)hy=0; else if(hy>=HH)hy=HH-1;
+    hcell[i]=hy*HW+hx; hs[hcell[i]]++;
+  }
+  for(k=1;k<=cells;k++)hs[k]+=hs[k-1];
+  for(i=n-1;i>=0;i--){ if(hcell[i]<0)continue; hi[--hs[hcell[i]]]=i; }
+  /* hs は先頭位置に戻っている。終わり位置は次の区画の先頭 */
+  for(var it=0;it<3;it++){
+    for(i=0;i<n;i++){ var h=hcell[i]; if(h<0)continue;
+      var cx=h%HW, cy=(h/HW)|0, yy,xx;
+      for(yy=cy-1;yy<=cy+1;yy++){ if(yy<0||yy>=HH)continue;
+        for(xx=cx-1;xx<=cx+1;xx++){ if(xx<0||xx>=HW)continue;
+          var hh=yy*HW+xx, e=hs[hh+1];
+          for(k=hs[hh];k<e;k++){ j=hi[k]; if(j<=i)continue;
+            dx=px[j]-px[i]; dy=py[j]-py[i]; rr=pr[i]+pr[j]; d2=dx*dx+dy*dy;
+            if(d2>=rr*rr||d2<1e-8)continue;
+            d=Math.sqrt(d2); ov=(rr-d)*0.5/d; dx*=ov; dy*=ov;
+            px[i]-=dx; py[i]-=dy; px[j]+=dx; py[j]+=dy; contact[i]=1; contact[j]=1;
+          }
+        }
+      }
+    }
+    if(mole>=0&&alive[mole]){
+      var mx=px[mole], my=py[mole], mr=pr[mole];
+      for(j=0;j<n;j++){ if(!alive[j]||j===mole)continue;
+        dx=px[j]-mx; if(dx>20||dx<-20)continue; dy=py[j]-my; if(dy>20||dy<-20)continue;
+        rr=mr+pr[j]; d2=dx*dx+dy*dy; if(d2>=rr*rr||d2<1e-8)continue;
+        d=Math.sqrt(d2); nx=dx/d; ny=dy/d; ov=rr-d;
+        w=ny>0.55?0.5:0.15; if(ny>0.55)moleGround=true;
+        mx-=nx*ov*w; my-=ny*ov*w; px[j]+=nx*ov*(1-w); py[j]+=ny*ov*(1-w); contact[j]=1;
+      }
+      px[mole]=mx; py[mole]=my;
+    }
+    for(i=0;i<n;i++) if(alive[i]) tileCollide(i);
+  }
+  /* まさつ：ほとんど動かない岩はその場で止める（山が自然な角度で残る） */
+  active=0;
+  for(i=0;i<n;i++){ if(!alive[i])continue;
+    dx=px[i]-ox[i]; dy=py[i]-oy[i]; d2=dx*dx+dy*dy;
+    if(i===mole){
+      if(moleGround&&d2<EPS2){px[i]=ox[i];py[i]=oy[i];}
+    }else{
+      if(contact[i]){ if(d2<EPS2){px[i]=ox[i];py[i]=oy[i];} else {px[i]=ox[i]+dx*0.98;py[i]=oy[i]+dy*0.98;active++;} }
+      else active++;
+      ang[i]+=dx/pr[i];
+    }
+    if(py[i]>H+10){
+      alive[i]=0;
+      if(i===mole){rescued=true;}
+      else if(kind[i]===1&&!settling){goldGot++; sGold(); if(fx.length<80)fx.push({t:2,x:px[i],y:H+STRIP/2,l:18});}
+    }
+  }
+}
+var hsEnd=0, mlx=0, mly=0, moleStill=false, idle=0, msx=0, msy=0, moleStuck=false;
+
+function blocksFall(){
+  var i,c,r,k;
+  for(k=0;k<COLS*ROWS;k++){cnt[k]=0;moleBlk[k]=0;}
+  hsEnd=0; for(i=0;i<n;i++){ if(!alive[i])continue; if(i!==mole)hsEnd++;
+    c=Math.floor(px[i]/S); r=Math.floor(py[i]/S); if(c<0||c>=COLS||r<0||r>=ROWS)continue;
+    if(i===mole){
+      for(var rr=Math.floor((py[i]-13)/S);rr<=Math.floor((py[i]+13)/S);rr++)for(var cc=Math.floor((px[i]-13)/S);cc<=Math.floor((px[i]+13)/S);cc++)
+        if(cc>=0&&cc<COLS&&rr>=0&&rr<ROWS)moleBlk[rr*COLS+cc]=1;
+    }else cnt[r*COLS+c]++;
+  }
+  falling=false;
+  for(r=ROWS-2;r>=0;r--)for(c=0;c<COLS;c++){
+    k=r*COLS+c; var t=tiles[k]; if(t<2)continue; var b=k+COLS;
+    if(tiles[b]===0&&cnt[b]<=fallThr&&!moleBlk[b]&&voff[k]>-S*0.5){
+      tiles[b]=t; tiles[k]=0; voff[b]=voff[k]-S; voff[k]=0; falling=true;
+    }
+  }
+  for(k=0;k<COLS*ROWS;k++){ if(voff[k]<0){voff[k]+=7; if(voff[k]>0)voff[k]=0; falling=true;} if(shake[k])shake[k]--; }
+}
+
+/* モグさんの歩く向き：出口までの道すじをさがす */
+var qc=new Int16Array(MAXC), qf=new Int8Array(MAXC), seen=new Uint8Array(MAXC);
+function bfs(sc,sr,soft){
+  var k,head=0,tail=0,c,r,f,b,d,nk;
+  for(k=0;k<COLS*ROWS;k++)seen[k]=0;
+  qc[tail]=sr*COLS+sc; qf[tail]=2; tail++; seen[sr*COLS+sc]=1;
+  while(head<tail){
+    k=qc[head]; f=qf[head]; head++; c=k%COLS; r=(k/COLS)|0;
+    if(r===ROWS-1) return f===2?0:f;
+    b=k+COLS;
+    if(!seen[b]&&(soft?tiles[b]!==1:tiles[b]===0)){seen[b]=1;qc[tail]=b;qf[tail]=f===2?0:f;tail++;}
+    if(tiles[b]!==0||cnt[b]>=restThr){
+      for(d=-1;d<=1;d+=2){ if(c+d<0||c+d>=COLS)continue; nk=k+d;
+        if(!seen[nk]&&(soft?tiles[nk]!==1:tiles[nk]===0)){seen[nk]=1;qc[tail]=nk;qf[tail]=f===2?d:f;tail++;}
+      }
+    }
+  }
+  return null;
+}
+function moleAI(){
+  if(mole<0||!alive[mole])return;
+  var mc=Math.max(0,Math.min(COLS-1,Math.floor(px[mole]/S))), mr=Math.max(0,Math.min(ROWS-1,Math.floor(py[mole]/S)));
+  var d=bfs(mc,mr,false); if(d===null)d=bfs(mc,mr,true);
+  wantDown=(d===0);
+  if(d===null||d===0){var dx=(mc+0.5)*S-px[mole]; d=Math.abs(dx)>3?(dx>0?1:-1):0;}
+  moleDir=d;
+}
+
+function isCol(t){return t>=2&&t<=5;}
+/* k を通る「たて・よこ3つ以上」のならびを out にしるす */
+function runAt(k,out){
+  var t=tiles[k]; if(!isCol(t))return false; var c=k%COLS, r=(k/COLS)|0, a=c, b=c, i, hit=false;
+  while(a>0&&tiles[r*COLS+a-1]===t)a--; while(b<COLS-1&&tiles[r*COLS+b+1]===t)b++;
+  if(b-a>=2){hit=true; if(out)for(i=a;i<=b;i++)out[r*COLS+i]=1;}
+  a=r; b=r; while(a>0&&tiles[(a-1)*COLS+c]===t)a--; while(b<ROWS-1&&tiles[(b+1)*COLS+c]===t)b++;
+  if(b-a>=2){hit=true; if(out)for(i=a;i<=b;i++)out[i*COLS+c]=1;}
+  return hit;
+}
+function allMatches(){ var o={},k,res=[]; for(k=0;k<COLS*ROWS;k++) if(isCol(tiles[k]))runAt(k,o); for(k in o)res.push(+k); return res; }
+/* そろった所をさがす。4つでバクダン、5つ以上・L字T字で大バクダンができる */
+var owlStart=-110, wantDown=false, noMove=0, lastSwap=[], shakeAmt=0, owlX=180, owlHit=0, winSecs=0;
+function secsLeft(){ return (mole>=0&&alive[mole]&&L)?Math.max(0,(py[mole]-18-gasY)/L.owl):99; }
+function matchScan(){
+  var o={},cells=[],bombs=[],bk={},r,c,k,t,len,i,pos;
+  function addBomb(k,ty){ if(bk[k]===undefined){bk[k]=bombs.length;bombs.push([k,ty]);} else if(ty>bombs[bk[k]][1])bombs[bk[k]][1]=ty; }
+  for(r=0;r<ROWS;r++){ c=0; while(c<COLS){ t=tiles[r*COLS+c]; len=1;
+    if(isCol(t)){ while(c+len<COLS&&tiles[r*COLS+c+len]===t)len++;
+      if(len>=3){ pos=r*COLS+c+((len/2)|0); for(i=0;i<len;i++){k=r*COLS+c+i; o[k]=(o[k]||0)+1; if(lastSwap.indexOf(k)>=0)pos=k;} if(len>=4)addBomb(pos,len>=5?10:9); } }
+    c+=len; } }
+  for(c=0;c<COLS;c++){ r=0; while(r<ROWS){ t=tiles[r*COLS+c]; len=1;
+    if(isCol(t)){ while(r+len<ROWS&&tiles[(r+len)*COLS+c]===t)len++;
+      if(len>=3){ pos=(r+len-1)*COLS+c; for(i=0;i<len;i++){k=(r+i)*COLS+c; o[k]=(o[k]||0)+1; if(lastSwap.indexOf(k)>=0)pos=k; if(o[k]>=2)addBomb(k,10);} if(len>=4)addBomb(pos,len>=5?10:9); } }
+    r+=len; } }
+  for(k in o)cells.push(+k);
+  return {cells:cells,bombs:bombs};
+}
+/* 動かせる所がなくなったら、色をまぜなおす */
+function shuffle(){
+  var cells=[],cols=[],k,i,j,t,tryNo=0;
+  for(k=0;k<COLS*ROWS;k++) if(isCol(tiles[k])){cells.push(k);cols.push(tiles[k]);}
+  if(!cells.length)return;
+  if(cells.length>=3){
+    do{ for(i=cols.length-1;i>0;i--){j=Math.floor(Math.random()*(i+1));t=cols[i];cols[i]=cols[j];cols[j]=t;} for(i=0;i<cells.length;i++)tiles[cells[i]]=cols[i]; }
+    while(!findMoves().length&&!matchScan().cells.length&&++tryNo<60);
+  }
+  if(!findMoves().length&&!matchScan().cells.length) tiles[cells[Math.floor(Math.random()*cells.length)]]=9;
+  if(!settling)fx.push({t:4,x:W/2,y:H/2,l:55,s:'まぜなおし！'});
+}
+function anyBomb(){ for(var k=0;k<COLS*ROWS;k++) if(tiles[k]>=9)return true; return false; }
+/* バクダン：まわりのブロック・石・木ばこをまとめてこわし、岩をふきとばす */
+function explode(k){
+  var ty=tiles[k]; if(ty<9)return; var R=ty===10?2:1, c0=k%COLS, r0=(k/COLS)|0, c,r,q,list=[],more=[],i;
+  burst(c0,r0,COLORS[ty]); tiles[k]=0;
+  for(r=r0-R;r<=r0+R;r++)for(c=c0-R;c<=c0+R;c++){ if(c<0||c>=COLS||r<0||r>=ROWS)continue; q=r*COLS+c;
+    if(tiles[q]>=9)more.push(q); else if(tiles[q]>=2)list.push(q); }
+  removeCells(list);
+  var cx=(c0+0.5)*S, cy=(r0+0.5)*S, rad=(R+1.6)*S;
+  for(i=0;i<n;i++){ if(!alive[i]||i===mole)continue; var dx=px[i]-cx, dy=py[i]-cy, d2=dx*dx+dy*dy; if(d2>rad*rad||d2<1)continue;
+    var dd=Math.sqrt(d2), v=3.2*(1-dd/rad); ox[i]=px[i]-dx/dd*v; oy[i]=py[i]-dy/dd*v+v*0.5; }
+  if(!settling){ gasY=Math.max(owlStart,gasY-(R===2?30:15)); owlHit=30; shakeAmt=Math.max(shakeAmt,R===2?13:8); fx.push({t:3,x:cx,y:cy,l:20,s:R===2?6:4}); tone(R===2?70:95,0.4,'sawtooth',0.22,35); }
+  quiet=0;
+  for(i=0;i<more.length;i++)explode(more[i]);
+}
+function tapBomb(k){
+  if(status!=='playing'||moves<=0||k<0||tiles[k]<9)return false;
+  idle=0; chain=0; lastSwap.length=0; explode(k); updateHud(); return true;
+}
+function swapOk(a,b){
+  if(!isCol(tiles[a])||!isCol(tiles[b])||tiles[a]===tiles[b])return false;
+  var t=tiles[a]; tiles[a]=tiles[b]; tiles[b]=t; var ok=runAt(a,null)||runAt(b,null); t=tiles[a]; tiles[a]=tiles[b]; tiles[b]=t; return ok;
+}
+function findMoves(){ var res=[],k,c; for(k=0;k<COLS*ROWS;k++){ c=k%COLS; if(c<COLS-1&&swapOk(k,k+1))res.push([k,k+1]); if(k+COLS<COLS*ROWS&&swapOk(k,k+COLS))res.push([k,k+COLS]); } return res; }
+function anySingle(){ for(var k=0;k<COLS*ROWS;k++) if(isCol(tiles[k]))return true; return false; }
+var COLORS=['','', '#e07a2f','#1f9e97','#7d5bd0','#9ab82f','#8a8a8a','#a8743c','','#4a4a50','#d8452e'];
+function removeCells(g){
+  var i,q,j,extra=[];
+  for(i=0;i<g.length;i++){ q=g[i]; var cc=q%COLS, rr=(q/COLS)|0;
+    var nb=[cc>0?q-1:-1,cc<COLS-1?q+1:-1,rr>0?q-COLS:-1,rr<ROWS-1?q+COLS:-1];
+    for(j=0;j<4;j++) if(nb[j]>=0&&tiles[nb[j]]===7&&extra.indexOf(nb[j])<0)extra.push(nb[j]);
+  }
+  g=g.concat(extra);
+  for(i=0;i<g.length;i++){ q=g[i]; burst(q%COLS,(q/COLS)|0,COLORS[tiles[q]]); tiles[q]=0; voff[q]=0; sox[q]=0; soy[q]=0; }
+}
+function adjacent(a,b){ var d=Math.abs(a-b); return d===COLS||(d===1&&((a/COLS)|0)===((b/COLS)|0)); }
+/* となりどうしを入れかえる。3つそろわなければ入れかえない（手数もへらない） */
+function trySwap(a,b){
+  if(status!=='playing'||moves<=0)return false;
+  if(a<0||b<0||a>=COLS*ROWS||b>=COLS*ROWS||!adjacent(a,b))return false;
+  if(voff[a]!==0||voff[b]!==0)return false;
+  if(!swapOk(a,b)){ if(tiles[a]>=2)shake[a]=14; if(tiles[b]>=2)shake[b]=14; sNo(); return false; }
+  var t=tiles[a]; tiles[a]=tiles[b]; tiles[b]=t;
+  var dx=((b%COLS)-(a%COLS))*S, dy=(((b/COLS)|0)-((a/COLS)|0))*S;
+  sox[a]=dx; soy[a]=dy; sox[b]=-dx; soy[b]=-dy; swapAnim=7; lastSwap=[a,b];
+  quiet=0; idle=0; chain=0; updateHud(); return true;
+}
+/* ハンマー：ブロック1こを2手つかってこわす */
+function hammerAt(k){
+  if(status!=='playing'||moves<2||k<0||!isCol(tiles[k]))return false;
+  removeCells([k]); moves-=2; quiet=0; idle=0; chain=0; sPop(1); updateHud(); return true;
+}
+function burst(c,r,col){
+  if(settling)return;
+  for(var i=0;i<10&&fx.length<260;i++) fx.push({t:1,x:c*S+8+Math.random()*24,y:r*S+8+Math.random()*24,vx:(Math.random()-0.5)*4,vy:-Math.random()*3-0.5,l:26,c:col,s:3+Math.random()*4});
+}
+
+function won(){ return (!goldNeed||goldGot>=goldNeed)&&(mole<0||rescued); }
+function frame(){
+  substep(); substep();
+  blocksFall();
+  for(var so=0;so<COLS*ROWS;so++){ if(sox[so]>0)sox[so]=Math.max(0,sox[so]-7); else if(sox[so]<0)sox[so]=Math.min(0,sox[so]+7);
+    if(soy[so]>0)soy[so]=Math.max(0,soy[so]-7); else if(soy[so]<0)soy[so]=Math.min(0,soy[so]+7); }
+  if(swapAnim>0)swapAnim--;
+  else if(!falling){ var ms=matchScan(); if(ms.cells.length){
+    var cxs=0,cys=0,qi,nq=ms.cells.length; for(qi=0;qi<nq;qi++){cxs+=ms.cells[qi]%COLS;cys+=(ms.cells[qi]/COLS)|0;}
+    removeCells(ms.cells);
+    for(qi=0;qi<ms.bombs.length;qi++){ var bq=ms.bombs[qi]; if(tiles[bq[0]]===0||tiles[bq[0]]===9)tiles[bq[0]]=bq[1]; }
+    chain++; quiet=0; lastSwap.length=0;
+    if(!settling){ sPop(nq+chain*3);
+      if(nq>=4||chain>=2)shakeAmt=Math.max(shakeAmt,2+chain*1.5+ms.bombs.length*2);
+      var tx=Math.max(70,Math.min(W-70,(cxs/nq+0.5)*S)), tyy=(cys/nq+0.5)*S;
+      if(chain>=2)fx.push({t:4,x:tx,y:tyy,l:55,s:chain+'れんさ！'});
+      else if(ms.bombs.length)fx.push({t:4,x:tx,y:tyy,l:55,s:'バクダン！'}); } } }
+  shakeAmt*=0.86; if(shakeAmt<0.3)shakeAmt=0;
+  for(var i=fx.length-1;i>=0;i--){var f=fx[i]; f.l--; if(f.t===1){f.x+=f.vx;f.y+=f.vy;f.vy+=0.3;} else if(f.t===4)f.y-=0.7; if(f.l<=0)fx.splice(i,1);}
+  if(settling)return;
+  frameNo++;
+  if(frameNo%5===0){
+    moleAI();
+    /* 岩につかえて進めないとき、モグさんは前の岩をほる（金ならひろう） */
+    if(status==='playing'&&mole>=0&&alive[mole]&&(moleDir!==0||wantDown)&&moleStill){
+      var bj=-1,bd=1e9,j,ddx,ddy;
+      for(j=0;j<n;j++){ if(!alive[j]||j===mole)continue; ddx=(px[j]-px[mole])*(moleDir||1); ddy=py[j]-py[mole];
+        if(moleDir===0){ if(ddx>15||ddx<-15||ddy<2||ddy>36||ddx*ddx+ddy*ddy>23*23)continue; if(ddx*ddx+ddy*ddy<bd){bd=ddx*ddx+ddy*ddy;bj=j;} continue; }
+        if(ddx<-7||ddx>22||ddy<-13||ddy>36)continue; var dq=ddx*ddx+ddy*ddy; if(dq>23*23&&ddy>14)continue; if(dq<bd){bd=dq;bj=j;} }
+      if(bj>=0){ alive[bj]=0; quiet=0; if(kind[bj]===1){goldGot++;sGold();} if(fx.length<150)fx.push({t:1,x:px[bj],y:py[bj],vx:-moleDir*1.5,vy:-1.5,l:16,c:kind[bj]?'#f0bd3a':'#8b8a88',s:4}); }
+    }
+  }
+  if(status==='playing'){
+    if(mole>=0&&alive[mole]&&frameNo%20===0){ var mdx=px[mole]-mlx, mdy=py[mole]-mly; moleStill=mdx*mdx+mdy*mdy<0.8; mlx=px[mole]; mly=py[mole]; }
+    if(mole>=0&&alive[mole]&&frameNo%90===0){ var sdx=px[mole]-msx, sdy=py[mole]-msy; moleStuck=sdx*sdx+sdy*sdy<4; msx=px[mole]; msy=py[mole]; }
+    if(active<=2&&!falling&&swapAnim===0&&(mole<0||!alive[mole]||moleStill))quiet++; else quiet=0;
+    if(gasOn&&mole>=0&&alive[mole]){ if(owlHit>0)owlHit--; else gasY+=L.owl/60; owlX+=(px[mole]-owlX)*0.04; }
+    if(won()){status='won';endTimer=40; winSecs=Math.max(0,(H-8-gasY)/L.owl);}
+    else if(gasOn&&mole>=0&&alive[mole]&&gasY>=py[mole]-18){reason='gas';status='lost';endTimer=25;}
+    else if(!falling&&swapAnim===0&&!findMoves().length&&!anyBomb()&&anySingle()){ if(++noMove>45){ shuffle(); noMove=0; quiet=0; } } else noMove=0;
+    if(frameNo%6===0)updateHud();
+  }else if(status==='won'||status==='lost'){
+    if(--endTimer<=0){ var w=status==='won'; status='end'; updateHud(); finish(w); }
+  }
+}
+
+/* ---------- 絵 ---------- */
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d'), K=1;
+var bg=document.createElement('canvas'), sprites={};
+function mk(w,h){var c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w*K)); c.height=Math.max(1,Math.round(h*K)); var x=c.getContext('2d'); x.scale(K,K); return [c,x];}
+function shade(hex,f){var v=parseInt(hex.slice(1),16),r=v>>16,g=v>>8&255,b=v&255;
+  function m(x){return Math.max(0,Math.min(255,Math.round(f>0?x+(255-x)*f:x*(1+f))));} return 'rgb('+m(r)+','+m(g)+','+m(b)+')';}
+function rrect(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function buildSprites(){
+  var S=40; /* ブロックの絵は40の大きさで作り、表示のときに縮める */
+  var rnd=rng32(77), i,a,c,x,g;
+  sprites.peb=[]; sprites.gold=[];
+  function pebble(base,shine){
+    a=mk(16,16); c=a[0]; x=a[1]; var pts=[], m=9, j;
+    for(j=0;j<m;j++){var an=j/m*6.283+rnd()*0.3, rad=5.2+rnd()*1.6; pts.push([8+Math.cos(an)*rad,8+Math.sin(an)*rad]);}
+    x.beginPath(); for(j=0;j<m;j++){var p=pts[j],q=pts[(j+1)%m]; var mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2; if(j===0)x.moveTo(mx,my); else x.quadraticCurveTo(p[0],p[1],mx,my);}
+    var p0=pts[0],q0=pts[1]; x.quadraticCurveTo(p0[0],p0[1],(p0[0]+q0[0])/2,(p0[1]+q0[1])/2); x.closePath();
+    g=x.createRadialGradient(5.5,5,0.5,8,8,8.5); g.addColorStop(0,shade(base,shine)); g.addColorStop(0.55,base); g.addColorStop(1,shade(base,-0.55));
+    x.fillStyle=g; x.fill(); x.lineWidth=0.7; x.strokeStyle='rgba(0,0,0,.55)'; x.stroke();
+    return c;
+  }
+  for(i=0;i<5;i++)sprites.peb.push(pebble(TH.pebs[i],0.35));
+  var golds=['#e2a92c','#f0bd3a','#d49a1e','#eab530','#dba526'];
+  for(i=0;i<5;i++)sprites.gold.push(pebble(golds[i],0.75));
+  sprites.blk=[];
+  for(var t=2;t<=7;t++){
+    a=mk(S,S); c=a[0]; x=a[1]; var col=COLORS[t];
+    if(t<=5){
+      rrect(x,1,1,S-2,S-2,6); g=x.createLinearGradient(0,0,0,S); g.addColorStop(0,shade(col,0.28)); g.addColorStop(0.5,col); g.addColorStop(1,shade(col,-0.38)); x.fillStyle=g; x.fill();
+      x.lineWidth=1.2; x.strokeStyle=shade(col,-0.6); x.stroke();
+      rrect(x,4,4,S-8,S-8,4); x.strokeStyle='rgba(255,255,255,.22)'; x.lineWidth=1; x.stroke();
+      x.fillStyle='rgba(255,255,255,.16)'; rrect(x,5,4,S-10,9,4); x.fill();
+      x.fillStyle=shade(col,0.62); x.strokeStyle=shade(col,-0.5); x.lineWidth=1; x.beginPath();
+      if(t===2){x.arc(20,21,7.5,0,6.3);}
+      else if(t===3){x.moveTo(20,12.5);x.lineTo(28.5,27.5);x.lineTo(11.5,27.5);x.closePath();}
+      else if(t===4){x.moveTo(20,12);x.lineTo(28.5,21);x.lineTo(20,30);x.lineTo(11.5,21);x.closePath();}
+      else {x.rect(17,13,6,16);x.rect(12,18,16,6);}
+      x.fill(); x.stroke();
+    }else if(t===6){
+      rrect(x,1,1,S-2,S-2,5); g=x.createLinearGradient(0,0,S,S); g.addColorStop(0,'#a7a6a2'); g.addColorStop(1,'#55534f'); x.fillStyle=g; x.fill();
+      x.strokeStyle='#2c2b29'; x.lineWidth=1.3; x.stroke();
+      x.strokeStyle='rgba(0,0,0,.4)'; x.lineWidth=1; x.beginPath(); x.moveTo(8,6);x.lineTo(15,17);x.lineTo(11,26);x.moveTo(15,17);x.lineTo(27,20);x.lineTo(33,31);x.moveTo(27,20);x.lineTo(30,9); x.stroke();
+      x.fillStyle='rgba(255,255,255,.15)'; rrect(x,4,3,S-8,6,3); x.fill();
+    }else{
+      rrect(x,1,1,S-2,S-2,3); x.fillStyle='#a8743c'; x.fill(); x.strokeStyle='#4b2f14'; x.lineWidth=1.4; x.stroke();
+      x.strokeStyle='rgba(60,35,12,.7)'; x.lineWidth=1; for(i=1;i<4;i++){x.beginPath();x.moveTo(2,i*10);x.lineTo(S-2,i*10);x.stroke();}
+      x.strokeStyle='#6e4a22'; x.lineWidth=4; x.beginPath(); x.moveTo(5,5);x.lineTo(S-5,S-5);x.moveTo(S-5,5);x.lineTo(5,S-5); x.stroke();
+      x.strokeStyle='#c99358'; x.lineWidth=3; x.strokeRect(3.5,3.5,S-7,S-7);
+    }
+    sprites.blk[t]=c;
+  }
+  for(t=9;t<=10;t++){
+    a=mk(S,S); c=a[0]; x=a[1];
+    g=x.createRadialGradient(15,16,2,20,23,16); g.addColorStop(0,t===9?'#8a8a92':'#ff9a7a'); g.addColorStop(1,t===9?'#141417':'#8e1f12');
+    x.fillStyle=g; x.beginPath(); x.arc(20,23,14.5,0,6.3); x.fill(); x.strokeStyle='#000'; x.lineWidth=1.2; x.stroke();
+    x.fillStyle='#5c564e'; x.fillRect(16,5,8,5);
+    x.strokeStyle='#c9a26a'; x.lineWidth=2; x.beginPath(); x.moveTo(20,5); x.quadraticCurveTo(26,-1,31,6); x.stroke();
+    x.fillStyle='#ffd23f'; x.beginPath(); x.arc(31,6,3.4,0,6.3); x.fill();
+    if(t===10){ x.fillStyle='#fff3c4'; x.font='bold 15px sans-serif'; x.textAlign='center'; x.fillText('大',20,29); }
+    sprites.blk[t]=c;
+  }
+}
+function drawBg(){
+  bg.width=cv.width; bg.height=cv.height; var x=bg.getContext('2d'); x.setTransform(K,0,0,K,0,0);
+  var g=x.createLinearGradient(0,0,0,CH); g.addColorStop(0,TH.bg0); g.addColorStop(1,TH.bg1); x.fillStyle=g; x.fillRect(0,0,W,CH);
+  var rnd=rng32(5+lv), i,c,r;
+  for(i=0;i<70;i++){x.fillStyle='rgba(0,0,0,'+(0.05+rnd()*0.1)+')'; x.beginPath(); x.ellipse(rnd()*W,rnd()*H,8+rnd()*26,5+rnd()*14,rnd()*3,0,6.3); x.fill();}
+  if(!L)return;
+  for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++){ if(L.map[r].charAt(c)!=='#')continue;
+    var X=c*S, Y=r*S; g=x.createLinearGradient(0,Y,0,Y+S); g.addColorStop(0,TH.wall0); g.addColorStop(1,TH.wall1); x.fillStyle=g; x.fillRect(X,Y,S,S);
+    x.strokeStyle='rgba(30,20,12,.55)'; x.lineWidth=1; x.beginPath(); x.moveTo(X,Y+S/2+0.5);x.lineTo(X+S,Y+S/2+0.5);
+    var o=(r%2)*S/4; x.moveTo(X+S/4+o+0.5,Y);x.lineTo(X+S/4+o+0.5,Y+S/2); x.moveTo(X+S*0.75-o+0.5,Y+S/2);x.lineTo(X+S*0.75-o+0.5,Y+S); x.stroke();
+    for(i=0;i<14;i++){x.fillStyle=rnd()<0.5?'rgba(255,240,220,.07)':'rgba(0,0,0,.14)'; x.fillRect(X+rnd()*(S-3),Y+rnd()*(S-3),2+rnd()*3,1.5+rnd()*2);}
+    function isW(cc,rr){return cc<0||cc>=COLS||(rr>=0&&rr<ROWS&&L.map[rr].charAt(cc)==='#');}
+    if(!isW(c,r-1)){x.fillStyle='rgba(255,235,200,.28)';x.fillRect(X,Y,S,2.5);}
+    if(r<ROWS-1&&!isW(c,r+1)){x.fillStyle='rgba(0,0,0,.45)';x.fillRect(X,Y+S-3,S,3);}
+    if(!isW(c-1,r)){x.fillStyle='rgba(255,235,200,.14)';x.fillRect(X,Y,2,S);}
+    if(!isW(c+1,r)){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(X+S-2.5,Y,2.5,S);}
+  }
+  x.fillStyle='#0d0a08'; x.fillRect(0,H,W,STRIP);
+  for(c=0;c<COLS;c++){ if(exits.indexOf(c)<0){x.fillStyle=TH.strip;x.fillRect(c*S,H,S,STRIP);x.fillStyle='rgba(255,235,200,.12)';x.fillRect(c*S,H,S,2);} }
+}
+function drawMole(x,y){
+  var f=moleFace, c=ctx;
+  c.save(); c.translate(x,y); c.scale(f,1);
+  var g=c.createRadialGradient(-3,-4,2,0,0,14); g.addColorStop(0,'#8a6a52'); g.addColorStop(1,'#3e2c21');
+  c.fillStyle=g; c.beginPath(); c.ellipse(0,1,12.5,12,0,0,6.3); c.fill(); c.strokeStyle='rgba(0,0,0,.6)'; c.lineWidth=1; c.stroke();
+  c.fillStyle='#d9bfa5'; c.beginPath(); c.ellipse(2,6,6.5,5.5,0,0,6.3); c.fill();
+  c.fillStyle='#e9a3a0'; c.beginPath(); c.ellipse(10.5,2.5,3.6,3,0,0,6.3); c.fill();
+  c.fillStyle='#14100d'; c.beginPath(); c.arc(4.5,-1.5,1.6,0,6.3); c.fill(); c.beginPath(); c.arc(-1,-1.5,1.4,0,6.3); c.fill();
+  c.fillStyle='#e9a3a0'; c.beginPath(); c.ellipse(-6,10.5,3.4,2,0,0,6.3); c.fill(); c.beginPath(); c.ellipse(5,11,3.4,2,0,0,6.3); c.fill();
+  c.fillStyle='#f3c63b'; c.beginPath(); c.arc(0,-4.5,10.5,Math.PI,0); c.closePath(); c.fill(); c.strokeStyle='#8a6a10'; c.stroke();
+  c.fillStyle='#f3c63b'; c.fillRect(-12,-5.5,24,2.5);
+  c.fillStyle='#fff7c9'; c.beginPath(); c.arc(7,-9,2.6,0,6.3); c.fill(); c.strokeStyle='#8a6a10'; c.stroke();
+  c.restore();
+}
+function render(){
+  var i,k,c,r,t=performance.now()/1000, shx=(Math.random()-0.5)*shakeAmt*K, shy=(Math.random()-0.5)*shakeAmt*K;
+  ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(bg,0,0);
+  ctx.setTransform(K,0,0,K,shx,shy);
+  /* 出口のしるし */
+  for(i=0;i<exits.length;i++){ var ex=exits[i]*S+S/2, a=0.55+0.35*Math.sin(t*4+i);
+    ctx.fillStyle='rgba(242,193,78,'+a+')'; ctx.beginPath(); ctx.moveTo(ex-9,H+6);ctx.lineTo(ex+9,H+6);ctx.lineTo(ex,H+19);ctx.closePath(); ctx.fill(); }
+  /* 岩 */
+  for(i=0;i<n;i++){ if(!alive[i]||i===mole)continue;
+    var sc=pr[i]/5.9*K, cs=Math.cos(ang[i])*sc, sn=Math.sin(ang[i])*sc;
+    ctx.setTransform(cs,sn,-sn,cs,px[i]*K+shx,py[i]*K+shy);
+    ctx.drawImage(kind[i]?sprites.gold[spr[i]]:sprites.peb[spr[i]],-8,-8,16,16);
+  }
+  ctx.setTransform(K,0,0,K,shx,shy);
+  if(mole>=0&&alive[mole])drawMole(px[mole],py[mole]);
+  /* ブロック */
+  for(r=0;r<ROWS;r++)for(c=0;c<COLS;c++){ k=r*COLS+c; var tt=tiles[k]; if(tt<2)continue;
+    var sx=shake[k]?Math.sin(shake[k]*1.6)*2.2:0;
+    ctx.drawImage(sprites.blk[tt],c*S+sx+sox[k],r*S+voff[k]+soy[k],S,S);
+  }
+  if(sel>=0&&isCol(tiles[sel])){ ctx.strokeStyle='#fff3c4'; ctx.lineWidth=3; ctx.strokeRect((sel%COLS)*S+1.5,((sel/COLS)|0)*S+1.5,S-3,S-3); }
+  for(i=0;i<fx.length;i++){ var f=fx[i];
+    if(f.t===1){ctx.globalAlpha=Math.min(1,f.l/14); ctx.fillStyle=f.c; ctx.fillRect(f.x-f.s/2,f.y-f.s/2,f.s,f.s);}
+    else if(f.t===3){ctx.globalAlpha=f.l/20; ctx.strokeStyle='#ffe9a3'; ctx.lineWidth=6; ctx.beginPath(); ctx.arc(f.x,f.y,(21-f.l)*f.s,0,6.3); ctx.stroke();}
+    else if(f.t===4){ctx.globalAlpha=Math.min(1,f.l/20); ctx.font='bold 26px sans-serif'; ctx.textAlign='center'; ctx.lineWidth=5; ctx.strokeStyle='#2a1c05'; ctx.strokeText(f.s,f.x,f.y); ctx.fillStyle='#ffd766'; ctx.fillText(f.s,f.x,f.y);}
+    else{ctx.globalAlpha=f.l/18; ctx.fillStyle='#ffe9a3'; ctx.beginPath(); ctx.arc(f.x,f.y,3+(18-f.l)*0.5,0,6.3); ctx.fill();}
+  }
+  ctx.globalAlpha=1;
+  if(gasOn&&L&&mole>=0&&(alive[mole]||status==='playing')){
+    if(gasY>-28)drawOwl(owlX,gasY,t);
+    else { ctx.fillStyle='rgba(242,193,78,.95)'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.fillText('▲ フクロウがくる！',Math.max(80,Math.min(W-80,owlX)),16); }
+    if(status==='playing'&&secsLeft()<=5){ ctx.fillStyle='rgba(225,60,40,'+(0.10+0.09*Math.sin(t*9))+')'; ctx.fillRect(0,0,W,H); }
+  }
+}
+function drawOwl(x,y,t){
+  var c=ctx, fl=Math.sin(t*11)*0.55, sd;
+  c.save(); c.translate(x,y+Math.sin(t*5)*2);
+  if(owlHit>0)c.rotate(Math.sin(t*40)*0.3);
+  c.strokeStyle='rgba(0,0,0,.6)'; c.lineWidth=1;
+  for(sd=-1;sd<=1;sd+=2){ c.save(); c.scale(sd,1); c.translate(11,-4); c.rotate(-0.5+fl);
+    c.fillStyle='#5b4632'; c.beginPath(); c.ellipse(15,0,19,8,0,0,6.3); c.fill(); c.stroke();
+    c.fillStyle='#463524'; c.beginPath(); c.ellipse(20,3,12,4,0,0,6.3); c.fill(); c.restore(); }
+  var g=c.createRadialGradient(-4,-6,2,0,0,22); g.addColorStop(0,'#9a7b58'); g.addColorStop(1,'#4a3826');
+  c.fillStyle=g; c.beginPath(); c.ellipse(0,0,15,18,0,0,6.3); c.fill(); c.stroke();
+  c.fillStyle='#cdb592'; c.beginPath(); c.ellipse(0,7,9,9,0,0,6.3); c.fill();
+  c.fillStyle='#4a3826'; c.beginPath(); c.moveTo(-12,-12);c.lineTo(-9,-22);c.lineTo(-4,-14);c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(12,-12);c.lineTo(9,-22);c.lineTo(4,-14);c.closePath(); c.fill();
+  for(sd=-1;sd<=1;sd+=2){ c.fillStyle='#f5e9d2'; c.beginPath(); c.arc(sd*6,-6,6.5,0,6.3); c.fill(); c.fillStyle='#f2b21c'; c.beginPath(); c.arc(sd*6,-6,4.6,0,6.3); c.fill(); c.fillStyle='#111'; c.beginPath(); c.arc(sd*6,-5,2.3,0,6.3); c.fill(); }
+  c.fillStyle='#e08a2a'; c.beginPath(); c.moveTo(-3,-2);c.lineTo(3,-2);c.lineTo(0,5);c.closePath(); c.fill();
+  c.strokeStyle='#e0b23a'; c.lineWidth=2;
+  for(sd=-1;sd<=1;sd+=2){ c.beginPath(); c.moveTo(sd*5,17);c.lineTo(sd*5,23); c.moveTo(sd*5,23);c.lineTo(sd*8,25); c.moveTo(sd*5,23);c.lineTo(sd*2,25); c.stroke(); }
+  if(owlHit>0){ c.fillStyle='#ffe9a3'; c.font='bold 14px sans-serif'; c.textAlign='center'; c.fillText('★ ★',0,-26); }
+  c.restore();
+}
+
+/* ---------- 画面まわり ---------- */
+function $(id){return document.getElementById(id);}
+function setHammer(on){ hammer=on; var b=$('btnHam'); if(b)b.className=on?'main':''; }
+function updateHud(){
+  if(!L)return;
+  $('stName').textContent=L.name; $('stNo').textContent='ステージ '+(lv+1)+' / '+LEVELS.length;
+  var sc=Math.ceil(secsLeft()), m=$('mv'); m.textContent=(mole>=0&&alive[mole])?Math.min(sc,99):'-'; m.className=sc<=5?'low':'';
+  var gg=$('gGold'), gm=$('gMole');
+  gg.hidden=false; gg.innerHTML='<i>●</i> 金 '+goldGot+' こ'; gg.className='';
+  if(mole>=0){gm.hidden=false; gm.textContent=rescued?'モグさん 脱出！':'モグさんを出口へ'; gm.className=rescued?'done':'';} else gm.hidden=true;
+  $('goalLine').textContent=L.goal;
+}
+function finish(w){
+  var st=0;
+  if(w){ var fr=winSecs/Math.max(1,(H-8-owlStart)/L.owl); st=fr>=0.7?3:(fr>=0.45?2:1); if((save.stars[lv]|0)<st)save.stars[lv]=st; store(); sWin(); }
+  else sFail();
+  $('endTitle').textContent=w?'クリア！':'ざんねん…';
+  $('endTitle').style.color=w?'var(--gold)':'var(--ng)';
+  $('endStars').textContent=w?('★★★'.slice(0,st)+'☆☆☆'.slice(0,3-st)):'';
+  $('endStars').hidden=!w;
+  var msg;
+  if(w) msg='フクロウに '+Math.round(winSecs)+' 秒の差をつけて脱出！ 金 '+goldGot+' こ。'+(lv===LEVELS.length-1?'全ステージ制覇です！':'');
+  else if(reason==='gas') msg='モグさんが フクロウに つかまってしまいました。';
+  else if(reason==='stuck') msg='消せるブロックが なくなりました。';
+  else msg='手数が なくなりました。';
+  $('endMsg').textContent=msg;
+  $('btnNext').hidden=!(w&&lv<LEVELS.length-1);
+  $('btnAgain').className=(w&&lv<LEVELS.length-1)?'':'main';
+  $('ovEnd').hidden=false;
+}
+function buildMenu(){
+  var g=$('grid'); g.innerHTML='';
+  LEVELS.forEach(function(l,i){
+    var b=document.createElement('button'), s=save.stars[i]|0, open=unlocked(i);
+    b.disabled=!open;
+    b.innerHTML='<span class="n">ステージ '+(i+1)+(open?'':'　🔒')+'</span><span class="t">'+l.name+'</span><span class="s">'+(s?'★★★'.slice(0,s)+'☆☆☆'.slice(0,3-s):(open?'☆☆☆':'　'))+'</span>';
+    b.onclick=function(){start(i);};
+    g.appendChild(b);
+  });
+}
+function buildThemes(){
+  var box=$('themes'); box.innerHTML='';
+  THEMES.forEach(function(t,i){
+    var b=document.createElement('button'); b.textContent=t.name; if(i===thIdx)b.className='main';
+    b.onclick=function(){ thIdx=i; TH=THEMES[i]; try{localStorage.setItem(KEY+'_theme',String(i));}catch(e){} buildSprites(); drawBg(); buildThemes(); };
+    box.appendChild(b);
+  });
+}
+function showMenu(){status='menu'; buildMenu(); $('ovEnd').hidden=true; $('ovHow').hidden=true; $('ovMenu').hidden=false;}
+function start(i){
+  $('ovMenu').hidden=true; $('ovEnd').hidden=true; $('ovHow').hidden=true;
+  loadLevel(i);
+  if(i===0&&!save.how){ $('ovHow').hidden=false; status='paused'; }
+}
+$('btnMenu').onclick=showMenu; $('btnToMenu').onclick=showMenu;
+$('btnRetry').onclick=function(){ if(L&&status!=='menu')start(lv); };
+$('btnAgain').onclick=function(){start(lv);};
+$('btnNext').onclick=function(){start(Math.min(lv+1,LEVELS.length-1));};
+var howBack='';
+$('btnHow').onclick=function(){ if(!$('ovHow').hidden)return; howBack=status; if(status==='playing')status='paused'; $('ovHow').hidden=false; };
+$('btnHowOk').onclick=function(){ $('ovHow').hidden=true; save.how=true; store(); if(status==='paused')status='playing'; };
+/* 音のボタン：消音 → 効果音＋音楽 → 効果音だけ → 消音 … */
+var sndMode=0; $('btnSnd').onclick=function(){ sndMode=(sndMode+1)%3; muted=sndMode===0; bgm.off=sndMode!==1; this.textContent=['🔇','🎵','🔊'][sndMode]; if(!muted)tone(880,0.1,'sine',0.1); bgm.next=0; };
+
+function cellAt(e){
+  var b=cv.getBoundingClientRect(), x=(e.clientX-b.left)/b.width*W, y=(e.clientY-b.top)/b.height*CH, c=Math.floor(x/S), r=Math.floor(y/S);
+  return {x:x,y:y,k:(c<0||c>=COLS||r<0||r>=ROWS)?-1:r*COLS+c};
+}
+cv.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  var p=cellAt(e); if(p.k<0||status!=='playing')return;
+  if(hammer){ if(!hammerAt(p.k)){ if(tiles[p.k]>=2)shake[p.k]=14; sNo(); } setHammer(false); sel=-1; return; }
+  if(tiles[p.k]>=9){ tapBomb(p.k); sel=-1; down=null; return; }
+  if(sel>=0&&sel!==p.k&&adjacent(sel,p.k)&&tiles[p.k]>=2){ trySwap(sel,p.k); sel=-1; down=null; return; }
+  if(isCol(tiles[p.k])){ down={k:p.k,x:p.x,y:p.y}; sel=p.k; try{cv.setPointerCapture(e.pointerId);}catch(err){} } else { sel=-1; down=null; }
+});
+cv.addEventListener('pointermove',function(e){
+  if(!down)return;
+  var p=cellAt(e), dx=p.x-down.x, dy=p.y-down.y, k=down.k, c=k%COLS, k2=-1;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<13)return;
+  if(Math.abs(dx)>Math.abs(dy)){ if(dx>0&&c<COLS-1)k2=k+1; else if(dx<0&&c>0)k2=k-1; } else { k2=dy>0?k+COLS:k-COLS; }
+  down=null; sel=-1;
+  if(k2>=0&&k2<COLS*ROWS)trySwap(k,k2);
+});
+cv.addEventListener('pointerup',function(){down=null;});
+cv.addEventListener('pointercancel',function(){down=null;});
+cv.addEventListener('contextmenu',function(e){e.preventDefault();});
+
+function resize(){
+  var box=$('stage'), w=box.clientWidth, h=box.clientHeight; if(w<50||h<50)return;
+  var s=Math.min((w-4)/W,(h-4)/CH), cw=Math.floor(W*s), chh=Math.floor(CH*s);
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.style.width=cw+'px'; cv.style.height=chh+'px';
+  cv.width=Math.round(cw*dpr); cv.height=Math.round(chh*dpr); K=cv.width/W;
+  buildSprites(); drawBg();
+}
+window.addEventListener('resize',resize);
+
+var last=0, acc=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  var dt=Math.min(0.1,(ts-last)/1000||0); last=ts;
+  if(status==='menu'||status==='paused'||!L){ if(L)render(); return; }
+  acc+=dt; var steps=0;
+  while(acc>=1/60&&steps<3){frame();acc-=1/60;steps++;}
+  if(acc>0.05)acc=0;
+  render();
+}
+
+/* 調整・点検用 */
+window.__iwa={
+  load:function(i){$('ovMenu').hidden=true;$('ovEnd').hidden=true;$('ovHow').hidden=true;loadLevel(i);},
+  step:function(k){for(var i=0;i<k;i++)frame();},
+  swap:trySwap, hammer:hammerAt, moves:findMoves, bomb:tapBomb, put:function(k,t){tiles[k]=t;},
+  dump:function(){var s='',r,c;for(r=0;r<ROWS;r++){for(c=0;c<COLS;c++){var t=tiles[r*COLS+c];s+=t===0?(cnt[r*COLS+c]>=5?':':'.'):'#abcdSW'.charAt(t-1);}s+='\n';}return s+JSON.stringify({active:active,falling:falling,dir:moleDir,still:moleStill,ground:moleGround});},
+  info:function(){return {status:status,reason:reason,moves:moves,gold:goldGot,need:goldNeed,total:goldTotal,n:hsEnd,mole:mole>=0?[Math.round(px[mole]),Math.round(py[mole])]:null,rescued:rescued,gasY:Math.round(gasY),quiet:quiet};},
+  run:function(list,tries,think,free){
+    var self=this, res=window.__res={done:false,rows:[]}, li=0;
+    (function next(){
+      if(li>=list.length){res.done=true;return;}
+      var i=list[li], used=[], t=0;
+      (function one(){
+        if(t>=tries){res.rows.push('S'+(i+1)+' margin['+used.join(',')+']'); li++; setTimeout(next,0); return;}
+        var r=self.bot(i,1,think,free); if(r.wins)used.push(free?Math.round(frameNo/60):Math.round(winSecs)); else used.push('x'+Math.round(frameNo/60)); t++; setTimeout(one,0);
+      })();
+    })();
+  },
+  bot:function(i,tries,think,free){
+    var wins=0,left=0,fin=finish; finish=function(){};
+    for(var t=0;t<tries;t++){
+      loadLevel(i); if(free)L=Object.assign({},L,{owl:0.01}); var guard=0;
+      while(status!=='end'&&guard++<400){
+        if(status==='playing'){ var bl=[]; for(var bk2=0;bk2<COLS*ROWS;bk2++) if(tiles[bk2]>=9)bl.push(bk2); var ms=findMoves();
+          if(bl.length&&(Math.random()<0.5||!ms.length)){tapBomb(bl[0]);} else if(ms.length){var m=ms[Math.floor(Math.random()*ms.length)]; trySwap(m[0],m[1]);} }
+        for(var w=0;w<(think||20);w++)frame();
+      }
+      if(won()){wins++;}
+    }
+    finish=fin; return {wins:wins,tries:tries,avgLeft:wins?left/wins:0};
+  }
+};
+
+resize(); buildMenu();
+requestAnimationFrame(function(ts){last=ts;resize();loop(ts);});
+})();
+</script>
+<script>
+(function(){ var host=document.getElementById('ovMenu'); if(!host)return; var box=host.querySelector('.in')||host;
+  var a=document.createElement('a'); a.href='./'; a.textContent='← ゲーム一覧へもどる';
+  a.style.cssText='display:block;margin:10px auto 0;padding:10px 14px;max-width:440px;text-align:center;border:1px solid rgba(255,255,255,.28);border-radius:10px;color:inherit;text-decoration:none;font-size:14px;opacity:.85';
+  box.appendChild(a);
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); } })();
+</script></body></html>
