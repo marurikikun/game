@@ -51,6 +51,19 @@ h2{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:22px;margin:0;
 .tag{display:inline-block;font-size:11px;border-radius:6px;padding:1px 6px;margin-right:6px;border:1px solid currentColor}
 .tag.b{color:var(--bad)} .tag.n{color:var(--dim)} .tag.g{color:var(--acc)} .tag.t{color:var(--good)}
 h3{font-size:14px;margin:6px 0 0;color:var(--acc)}
+
+/* スマホで読みやすい大きさ */
+#txt{font-size:20px;line-height:1.8}
+#who{font-size:15px}
+button{font-size:16px}
+button.sm{font-size:14px}
+#chapName{font-size:14px}
+.sub{font-size:15px}
+.note{font-size:16px}
+.flow .en{font-size:15px}
+#toast{font-size:15px}
+#more{font-size:13px}
+#box.code #txt{font-size:16px}
 </style>
 
 <div id="app">
@@ -80,6 +93,7 @@ h3{font-size:14px;margin:6px 0 0;color:var(--acc)}
       <button id="btnCont">つづきから</button>
       <button id="btnFlow2">フローチャート・エンド一覧</button>
       <button id="btnSnd2">音楽と効果音：切</button>
+      <button id="btnVoice">セリフの読み上げ：入</button>
     </div>
     <p class="sub" id="prog"></p>
   </div>
@@ -650,6 +664,7 @@ var DIM={dark:1,vault:1};
 var BGMUSIC={ext:'calm',lounge:'calm',room:'calm',office:'tension',corridor:'tension',basement:'tension',dark:'danger',vault:'danger',roof:'calm',dawn:'dawn'};
 
 /* ---------- 音：音楽ファイルは使えないので、音を1つずつ鳴らして曲にする ---------- */
+var VOICE={'玲奈':[1.15,0.95],'ゆかり':[1.7,1.1],'冴子':[0.95,1.0],'澪':[1.5,0.9],'真壁':[0.7,1.0,1]};
 var muted=true, actx=null, bgm={name:'',want:'calm',step:0,next:0,gain:null,nz:null};
 var SONGS={
   calm:{bpm:72,lead:'sine',lv:0.09,arp:0,dr:0,bs:8,ch:[[45,1],[41,0],[43,0],[40,1]],
@@ -670,7 +685,7 @@ function kick(t){ var a=actx,o=a.createOscillator(),g=a.createGain(); o.frequenc
 function bgmTick(){
   if(muted||!actx||document.hidden){ bgm.next=0; return; }
   try{
-    var a=actx; if(a.state==='suspended')a.resume();
+    var a=actx; if(a.state==='suspended')a.resume(); if(bgm.gain)bgm.gain.gain.value=voiceOn?0.2:0.45;
     if(bgm.want!==bgm.name){ bgm.name=bgm.want; bgm.step=0; bgm.next=0; }
     var sg=SONGS[bgm.name]; if(!sg)return;
     var sl=60/sg.bpm/4, now=a.currentTime; if(bgm.next<now)bgm.next=now+0.08;
@@ -691,8 +706,23 @@ function seBad(){ if(muted||!ac())return; try{ var t=actx.currentTime, d=actx.de
 function seGood(){ if(muted||!ac())return; try{ var t=actx.currentTime, d=actx.destination; [72,76,79,84].forEach(function(m,i){ osc(m,t+i*0.16,0.9,'sine',0.12,d); }); }catch(e){} }
 function seMem(){ if(muted||!ac())return; try{ var t=actx.currentTime, d=actx.destination; osc(81,t,0.5,'sine',0.11,d); osc(88,t+0.14,0.8,'sine',0.11,d); }catch(e){} }
 function seClick(){ if(muted||!ac())return; try{ osc(76,actx.currentTime,0.07,'square',0.04,actx.destination); }catch(e){} }
-function setSnd(on){ muted=!on; $('btnSnd').textContent=on?'🎵':'🔇'; $('btnSnd2').textContent='音楽と効果音：'+(on?'入':'切'); bgm.next=0; if(on){ ac(); seClick(); } }
-$('btnSnd').onclick=function(){ setSnd(muted); }; $('btnSnd2').onclick=function(){ setSnd(muted); };
+function setSnd(on){ muted=!on; opt.snd=on?1:0; saveOpt(); $('btnSnd').textContent=on?'🎵':'🔇'; $('btnSnd2').textContent='音楽と効果音：'+(on?'入':'切'); bgm.next=0; if(on){ ac(); seClick(); } }
+function togSnd(){ if(!optApplied){ optApplied=true; setVoice(opt.voice); setSnd(!opt.snd); } else setSnd(muted); }
+$('btnSnd').onclick=togSnd; $('btnSnd2').onclick=togSnd;
+/* ---------- セリフの読み上げ（端末に入っている声を使う）と、音の設定の記憶 ---------- */
+var OPTKEY=KEY+'_opt', opt={snd:1,voice:1}, voiceOn=false, jaV=null, jaM=null, optApplied=false;
+try{ var ro=JSON.parse(localStorage.getItem(OPTKEY)||'null'); if(ro){ opt.snd=ro.snd?1:0; opt.voice=ro.voice?1:0; } }catch(e){}
+function saveOpt(){ try{ localStorage.setItem(OPTKEY,JSON.stringify(opt)); }catch(e){} }
+function pickVoices(){ try{ var vs=speechSynthesis.getVoices().filter(function(v){ return /^ja/i.test(v.lang); }); jaV=vs[0]||null; jaM=null; vs.forEach(function(v){ if(/Kyoko|O-ren|Haruka|Nanami|Sayaka/i.test(v.name))jaV=v; if(/Hattori|Otoya|Ichiro|Keita/i.test(v.name))jaM=v; }); }catch(e){} }
+if(window.speechSynthesis){ pickVoices(); try{ speechSynthesis.onvoiceschanged=pickVoices; }catch(e){} }
+function stopVoice(){ try{ if(window.speechSynthesis)speechSynthesis.cancel(); }catch(e){} }
+/* VOICE[名前] = [声の高さ, 速さ, 男の声なら1] */
+function speak(text,who){ if(!voiceOn||!window.speechSynthesis)return; try{ speechSynthesis.cancel(); if(!text)return; var u=new SpeechSynthesisUtterance(text.replace(/[「」『』―…\n]/g,' ')), v=VOICE[who]||[1,1,0]; u.lang='ja-JP'; if(v[2]&&jaM){ u.voice=jaM; u.pitch=Math.min(1.3,v[0]+0.45); } else { if(jaV)u.voice=jaV; u.pitch=v[0]; } u.rate=v[1]; u.volume=1; speechSynthesis.speak(u); }catch(e){} }
+function setVoice(on){ voiceOn=!!on&&!!window.speechSynthesis; opt.voice=on?1:0; saveOpt(); $('btnVoice').textContent=window.speechSynthesis?('セリフの読み上げ：'+(voiceOn?'入':'切')):'セリフの読み上げは、この端末では使えません'; if(!voiceOn)stopVoice(); }
+$('btnVoice').onclick=function(){ if(!optApplied){ optApplied=true; if(opt.snd)setSnd(true); setVoice(!opt.voice); } else setVoice(!voiceOn); if(voiceOn)speak('読み上げを入れました',''); };
+/* 音は、最初に「はじめから」などを押したときに、前回の設定どおりに入る（何も変えていなければ「入」） */
+function applyOpt(){ if(optApplied)return; optApplied=true; if(opt.snd)setSnd(true); setVoice(opt.voice); }
+$('btnSnd').textContent=opt.snd?'🎵':'🔇'; $('btnSnd2').textContent='音楽と効果音：'+(opt.snd?'入':'切'); $('btnVoice').textContent='セリフの読み上げ：'+(opt.voice?'入':'切');
 
 /* ---------- 進行 ---------- */
 var cur=null, li=0, flags={}, curChap='', typing=null, full='', shown=0, lastChoice=null, resetSnap=null, waitChoice=false, ended=false, toastT=null;
@@ -721,7 +751,7 @@ function line(){
   if(n.limit)t=t.replace('{cold}',Math.max(0,n.limit.max-(flags.cold||0)));
   if(WHO[who]){ var base=WHO[who], nc=n.ch||''; setCh(nc.indexOf(base)===0?nc:base); }
   if(bang){ var fx=$('fx'), sg=$('stage'); fx.className=''; sg.className=''; void fx.offsetWidth; fx.className='go'; sg.className='shake'; seSting(); }
-  $('who').textContent=who; full=who?'「'+t+'」':t; shown=0; $('txt').textContent=''; $('more').hidden=false;
+  $('who').textContent=who; full=who?'「'+t+'」':t; shown=0; $('txt').textContent=''; $('more').hidden=false; if(who)speak(t,who); else stopVoice();
   clearInterval(typing); typing=setInterval(function(){ shown+=2; if(shown>=full.length){ shown=full.length; clearInterval(typing); typing=null; } $('txt').textContent=full.slice(0,shown); },22);
 }
 function next(){
@@ -759,7 +789,7 @@ function showCode(n){
 function endInfo(id){ for(var i=0;i<ENDS.length;i++)if(ENDS[i][0]===id)return ENDS[i]; return null; }
 function progText(){ return '結末 '+count(save.ends)+' / '+ENDS.length+'　記憶 '+count(save.mem)+' / '+MKEYS.length+'　後日談 '+count(save.epi)+' / 3'; }
 function showEnd(e){
-  ended=true; var inf=endInfo(e.id), k=inf[2], newMem=e.mem&&!save.mem[e.mem];
+  ended=true; stopVoice(); var inf=endInfo(e.id), k=inf[2], newMem=e.mem&&!save.mem[e.mem];
   save.ends[e.id]=1; if(e.mem)save.mem[e.mem]=1; if(e.epi)save.epi[e.epi]=1; store();
   bgm.want=k==='t'?'dawn':'none'; if(k==='b')seBad(); else if(k==='t'||k==='g')seGood();
   $('endKind').textContent=KIND[k]; $('endKind').style.color=KCOL[k];
@@ -768,10 +798,10 @@ function showEnd(e){
   $('endHint').innerHTML='<b>'+(k==='t'?'あとがき':'ヒント')+'</b><br>'+e.hint+'<br><span style="color:var(--dim)">'+progText()+'</span>';
   $('btnRetry').hidden=!lastChoice; $('ovEnd').hidden=false;
 }
-function startNew(){ flags={}; curChap=''; lastChoice=null; hideAll(); go('p0'); }
-function jump(ch){ flags=copy(save.chap[ch]||{}); curChap=''; lastChoice=null; hideAll(); go(ch==='c7'&&flags.saeDead?'c7d':ch); }
+function startNew(){ applyOpt(); flags={}; curChap=''; lastChoice=null; hideAll(); go('p0'); }
+function jump(ch){ applyOpt(); flags=copy(save.chap[ch]||{}); curChap=''; lastChoice=null; hideAll(); go(ch==='c7'&&flags.saeDead?'c7d':ch); }
 function hideAll(){ $('ovTitle').hidden=true; $('ovEnd').hidden=true; $('ovFlow').hidden=true; }
-function showTitle(){ hideAll(); bgm.want='calm'; $('btnCont').disabled=!save.last; $('prog').textContent=progText(); $('ovTitle').hidden=false; }
+function showTitle(){ stopVoice(); hideAll(); bgm.want='calm'; $('btnCont').disabled=!save.last; $('prog').textContent=progText(); $('ovTitle').hidden=false; }
 var wipeStep=0;
 function showFlow(){
   var f=$('flow'); f.innerHTML='';
