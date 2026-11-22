@@ -1,8 +1,8 @@
 // ゲーム：電波がなくても開けるようにするしくみ（Service Worker）
 // 開くたびに新しいものを取りにいき、届かないときは保存しておいた写しを使う。
 // 進み具合の記録はもともとiPhoneの中だけにあるので、電波がなくても続きから遊べる。
-const SHELL = "game-shell-v2";
-const FILES = ["./", "index.html", "manifest.json", "icon-180.png", "icon-512.png", "iwakuzushi.html", "robo.html", "kirisaka.html", "sagimiya.html", "takkyu.html", "rhythm.html"];
+const SHELL = "game-shell-v3";
+const FILES = ["./", "index.html", "manifest.json", "icon-180.png", "icon-512.png", "iwakuzushi.html", "hori.html", "robo.html", "kirisaka.html", "sagimiya.html", "takkyu.html", "rhythm.html"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
