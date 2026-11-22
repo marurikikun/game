@@ -1,0 +1,264 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>湯けむり番付</title><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="ゲーム"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#14110e"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-180.png"><link rel="manifest" href="manifest.json"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}body{margin:0;font-size:14px}[hidden]{display:none!important}</style></head><body><title>湯けむり番付</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{color-scheme:dark;--bg:#14110e;--panel:#221c16;--line:#4e4234;--fg:#f4ecdf;--dim:#b9aa94;--acc:#ffb84a;--bad:#ff7a66;--good:#8fe07a}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;font-size:15px;line-height:1.6;padding-block:8px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#app{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.bar{display:flex;gap:6px}
+.chip{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px 8px;font-size:11.5px;color:var(--dim);line-height:1.35;white-space:nowrap;overflow:hidden}
+.chip b{display:block;font-size:16px;color:var(--fg)}
+button{font:inherit;color:var(--fg);background:#30281e;border:1px solid var(--line);border-radius:11px;padding:9px 12px;cursor:pointer;touch-action:manipulation;line-height:1.45}
+button:disabled{opacity:.42}
+.bar button{flex:0 0 auto;padding:3px 8px;font-size:12.5px;white-space:nowrap}
+#bNext{position:sticky;bottom:max(8px,env(safe-area-inset-bottom,0px));box-shadow:0 0 0 6px var(--bg);z-index:3}
+#fore{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px}
+#fore b{color:var(--acc)}
+#grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;touch-action:manipulation}
+.t{position:relative;aspect-ratio:1;border-radius:9px;border:1px solid var(--line);background:#2a241b;padding:0;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;min-width:0}
+.t small{position:absolute;left:0;right:0;bottom:1px;font-size:9px;letter-spacing:1px;font-weight:400;line-height:1}
+.t.lot{border-style:dashed;background:#1d1812;color:#5c4f3e;font-size:16px;font-weight:400}
+.t.river{background:#1f4f7a;border-color:#2f6a9c;color:#9fd0f4;font-size:15px}
+.t.mount{background:#27492c;border-color:#3a6a40;color:#a9dca4;font-size:17px}
+.t.spring{background:#7a3d12;border-color:#c9732a;color:#ffd9a8;font-size:17px}
+.t.sta{background:#44444c;border-color:#77778a;color:#e6e6f2;font-size:17px}
+.t.sel{outline:3px solid var(--acc);outline-offset:1px;z-index:1}
+.t.closed{opacity:.4}
+.b1{background:#8a4a2e}.b2{background:#a8672a}.b3{background:#8a2e5a}.b4{background:#2e7a7a}.b5{background:#3f7a2e}.b6{background:#6a3f9a}.b7{background:#c0572a}.b8{background:#9a2a2a}.b9{background:#2e5a9a}
+#sheet{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;min-height:120px}
+#sheet h3{margin:0;font-size:16px;color:var(--acc)}
+#sheet p{margin:0;font-size:13px;color:var(--dim)}
+.opt{display:flex;flex-direction:column;align-items:flex-start;text-align:left;width:100%;padding:7px 10px}
+.opt .n{font-weight:700;font-size:15px}.opt .d{font-size:12px;color:var(--dim)}.opt .f{font-size:12.5px;color:var(--good)}.opt .f.neg{color:var(--bad)}
+.opt .lock{font-size:12px;color:var(--bad)}
+button.main{background:var(--acc);color:#2a1c05;border-color:#ffe2a8;font-weight:900;font-size:17px;text-align:center}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row button{flex:1}
+#adv{font-size:13.5px;background:#2b2116;border-left:4px solid var(--acc);padding:6px 10px;border-radius:0 8px 8px 0}
+.ov{position:fixed;inset:0;background:rgba(10,8,6,.93);z-index:10;overflow:auto;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.in{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+h1{font-size:25px;margin:0;color:var(--acc);text-align:center;letter-spacing:.08em}
+h2{font-size:20px;margin:0;text-align:center;color:var(--acc)}
+.sub{margin:0;font-size:13.5px;color:var(--dim);text-align:center}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.8}
+.box b{color:var(--acc)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:3px 2px;border-bottom:1px solid #3a3024} td:last-child{text-align:right;font-weight:700;white-space:nowrap}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.big{font-size:30px;font-weight:900;text-align:center;color:var(--acc);letter-spacing:.1em}
+.note{font-size:13px;color:var(--dim)}
+</style>
+
+<div id="app">
+  <div class="bar">
+    <div class="chip">とき<b id="hTime">1年目 春</b></div>
+    <div class="chip">所持金<b id="hMoney">0 両</b></div>
+    <div class="chip">評判<b id="hRep">★★★</b></div>
+    <div class="chip">番付<b id="hRank">序ノ口</b></div>
+  </div>
+  <div class="bar">
+    <div id="fore" style="flex:1"></div>
+    <button id="bSnd" aria-label="音の入・切">🔇</button>
+    <button id="bMenu">メニュー</button>
+  </div>
+  <div id="grid"></div>
+  <div id="adv"></div>
+  <div id="sheet"></div>
+  <button class="main" id="bNext">つぎの季節へ進む</button>
+</div>
+
+<div class="ov" id="ovMenu"><div class="in">
+  <h1>湯けむり番付</h1>
+  <p class="sub">さびれた温泉街を、10年で「横綱」の温泉地に育てる街づくり。</p>
+  <div class="row"><button class="main" id="bCont" hidden>つづきから</button><button class="main" id="bNew">新しく始める</button></div>
+  <div class="box"><b>空き地をタッチ</b>して、宿や食堂を建てます。建物をタッチすると<b>増築</b>できます。<br>建てる場所が大事です。<b>源泉</b>（♨）や<b>川</b>のとなりの宿は人気が上がり、<b>駅</b>のとなりの土産屋はよく売れます。<br>建て終えたら<b>「つぎの季節へ進む」</b>。お客が来て、お金が入ります。<br>食事や買い物の店が足りないと<b>評判</b>が下がり、足りていると上がります。<br>1年のお客の数で<b>番付</b>が決まります。番付が上がると、新しい建物が建てられるようになります。<br>こまったら、画面の<b>番頭さんの一言</b>を見てください。</div>
+  <p class="note" id="bestTxt"></p>
+</div></div>
+<div class="ov" id="ovRes" hidden><div class="in">
+  <h2 id="rTitle"></h2>
+  <div class="box"><table id="rTable"></table></div>
+  <div class="box" id="rNotes"></div>
+  <div class="box" id="rEvent" hidden></div>
+  <div class="row" id="rBtns"></div>
+</div></div>
+<div class="ov" id="ovEnd" hidden><div class="in">
+  <h2>10年がたちました</h2>
+  <div class="big" id="eRank"></div>
+  <p class="sub" id="eMsg"></p>
+  <div class="row"><button class="main" id="bFree">このまま続けて遊ぶ</button><button id="bEndNew">新しく始める</button></div>
+</div></div>
+
+<script>
+(function(){
+'use strict';
+function $(i){return document.getElementById(i);}
+var COLS=6, ROWS=7, N=42, KEY='yukemuri_v1', K=1.6;
+var SEAS=['春','夏','秋','冬'], SF=[1,0.9,1.05,1.15];
+var RANKS=['序ノ口','序二段','三段目','幕下','十両','前頭','小結','関脇','大関','横綱'], RTH=[0,70,140,240,380,560,800,1100,1500,2000];
+/* 建物：k＝マスに出す字、cost＝建てる値段、rank＝建てられるようになる番付 */
+var B=[null,
+ {k:'宿',n:'宿',cost:300,rank:0,d:'泊まり客を受け入れる。源泉・川・庭園のとなりだと人気が上がる'},
+ {k:'食',n:'食堂',cost:200,rank:0,d:'お客に食事を出してかせぐ。宿のとなりだと多く出せる'},
+ {k:'土',n:'土産屋',cost:220,rank:0,d:'おみやげを売る。駅のとなりだとよく売れる。土産屋どうしがとなりだと売れにくい'},
+ {k:'足',n:'足湯',cost:120,rank:0,d:'安くて人気が上がる。源泉か川のとなりだと効果1.5倍'},
+ {k:'庭',n:'庭園',cost:180,rank:2,d:'人気が上がり、となりの宿の人気も上げる。春は2倍'},
+ {k:'遊',n:'射的屋',cost:260,rank:2,d:'お客が遊んでいく。食堂のとなりだとよくかせぐ'},
+ {k:'湯',n:'外湯',cost:500,rank:3,d:'大きな共同浴場。人気が大きく上がる。源泉のとなりにしか建てられない。冬は1.5倍',need:3},
+ {k:'社',n:'神社',cost:600,rank:4,d:'人気が上がり、夏祭りが開けるようになる。街に1つだけ',max:1},
+ {k:'望',n:'展望台',cost:700,rank:5,d:'山の景色で人気が大きく上がる。山のとなりにしか建てられない。秋は2倍',need:2}];
+var CAP1=[0,12,22,36,52], FEE=[0,6,7,8,9], CAP2=[0,14,26,40,56], CAP3=[0,12,22,34,48], AP4=[0,5,8,12,17], AP5=[0,4,7,10,14], CAP6=[0,10,18,28,40], AP7=[0,14,22,32,44], CAP7=[0,30,50,80,120], AP8=[0,8,12,16,22], AP9=[0,16,24,34,46];
+var LVRANK=[0,0,2,5,7], MAXLV=4;   /* 増築：2段目は三段目から、3段目は前頭から、4段目は関脇から */
+
+var G=null, sel=-1, auto=false, best=null;
+try{ best=JSON.parse(localStorage.getItem(KEY+'_best')||'null'); }catch(e){}
+function store(){ if(auto)return; try{ localStorage.setItem(KEY,JSON.stringify(G)); }catch(e){} }
+function load(){ try{ var o=JSON.parse(localStorage.getItem(KEY)||'null'); if(o&&o.map&&o.map.length===N)return o; }catch(e){} return null; }
+
+/* ---------- 音 ---------- */
+var actx=null, muted=true, bgT=null, bgI=0;
+try{ muted=localStorage.getItem(KEY+'_snd')!=='1'; }catch(e){}
+function tone(f,d,type,vol,when){ if(muted||auto)return; try{ if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended')actx.resume(); var t=actx.currentTime+(when||0), o=actx.createOscillator(), g=actx.createGain(); o.type=type||'triangle'; o.frequency.value=f; g.gain.setValueAtTime(vol||0.1,t); g.gain.exponentialRampToValueAtTime(0.001,t+d); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+d+0.02); }catch(e){} }
+function sBuild(){ tone(392,0.12,'square',0.07); tone(587,0.18,'triangle',0.1,0.08); }
+function sCoin(){ tone(988,0.08,'square',0.06); tone(1319,0.2,'square',0.06,0.07); }
+function sBad(){ tone(196,0.3,'sawtooth',0.07); }
+function sUp(){ [523,659,784,1047].forEach(function(f,i){ tone(f,0.3,'triangle',0.12,i*0.12); }); }
+var MEL=[62,0,69,67,65,0,62,0,60,62,65,0,67,0,69,0,74,0,72,69,67,0,65,0,62,65,67,0,62,0,0,0];   /* 和風の短い旋律 */
+function bgm(){ if(muted)return; var m=MEL[bgI%MEL.length]; if(m)tone(440*Math.pow(2,(m-69)/12),0.9,'triangle',0.05); if(bgI%8===0)tone(440*Math.pow(2,(38-69)/12)*2,1.2,'sine',0.05); bgI++; }
+function setSnd(){ $('bSnd').textContent=muted?'🔇':'🔊'; clearInterval(bgT); bgT=null; if(!muted)bgT=setInterval(bgm,330); }
+$('bSnd').onclick=function(){ muted=!muted; try{ localStorage.setItem(KEY+'_snd',muted?'0':'1'); }catch(e){} setSnd(); if(!muted)tone(880,0.1); };
+
+/* ---------- 地図を作る：0空き地 1川 2山 3源泉 4駅 ---------- */
+function newGame(){ var map=[], i, r, c=1+Math.floor(Math.random()*4);
+  for(i=0;i<N;i++)map.push(0);
+  for(r=0;r<ROWS;r++){ map[r*COLS+c]=1; if(r<ROWS-1){ var d=Math.floor(Math.random()*3)-1, c2=Math.max(1,Math.min(COLS-2,c+d)); if(c2!==c&&Math.random()<0.6){ map[r*COLS+c2]=1; c=c2; } } }
+  function put(v,rows,n){ var tries=0; while(n>0&&tries++<200){ var k=rows[Math.floor(Math.random()*rows.length)]*COLS+Math.floor(Math.random()*COLS); if(map[k]===0){ map[k]=v; n--; } } }
+  put(2,[0,0,1],4); put(2,[2,3,4],1); put(3,[1,2,3],1); put(3,[3,4,5],1); put(4,[ROWS-1],1);
+  G={map:map,b:map.map(function(){return 0;}),lv:map.map(function(){return 0;}),money:900,rep:1,turn:0,hist:[],rank:0,mul:1,closed:-1,debuff:0,ended:false,seen:{}};
+  sel=-1; store(); }
+function nb(i){ var r=(i/COLS)|0, c=i%COLS, a=[]; if(r>0)a.push(i-COLS); if(r<ROWS-1)a.push(i+COLS); if(c>0)a.push(i-1); if(c<COLS-1)a.push(i+1); return a; }
+function hasT(S,i,t){ return nb(i).some(function(j){ return S.map[j]===t; }); }
+function cntB(S,i,b){ return nb(i).filter(function(j){ return S.b[j]===b; }).length; }
+function total(S,b){ var n=0, i; for(i=0;i<N;i++)if(S.b[i]===b)n++; return n; }
+
+/* ---------- 1季節ぶんの計算。det＝trueなら運を入れない（見こみ用） ---------- */
+function stat(S,season,det){ var A=10, innCap=0, innVal=0, eat=0, gift=0, giftVal=0, fun=0, funVal=0, bathCap=0, keep=0, i, L, notes=[], shrine=false, parks=0, views=0, baths=0;
+  for(i=0;i<N;i++){ var b=S.b[i]; if(!b)continue; L=S.lv[i]; keep+=Math.round(B[b].cost*0.07*L); if(i===S.closed)continue;
+    if(b===1){ var ap=2*L+(hasT(S,i,3)?4:0)+(hasT(S,i,1)?2:0)+cntB(S,i,5)*3; A+=ap; innCap+=CAP1[L]; innVal+=CAP1[L]*(FEE[L]+(cntB(S,i,7)?1:0)); }
+    else if(b===2){ var c2=CAP2[L]*(cntB(S,i,1)?1.2:1); eat+=c2; A+=L; }
+    else if(b===3){ var c3=CAP3[L], rt=4*(hasT(S,i,4)?1.5:1)*(cntB(S,i,3)?0.8:1); gift+=c3; giftVal+=c3*rt; A+=L; }
+    else if(b===4){ A+=AP4[L]*((hasT(S,i,3)||hasT(S,i,1))?1.5:1)*(season===3?1.3:1); }
+    else if(b===5){ A+=AP5[L]*(season===0?2:1); parks++; }
+    else if(b===6){ var c6=CAP6[L]; fun+=c6; funVal+=c6*5*(cntB(S,i,2)?1.3:1); A+=2*L; }
+    else if(b===7){ A+=AP7[L]*(season===3?1.5:1); bathCap+=CAP7[L]; baths++; }
+    else if(b===8){ A+=AP8[L]; shrine=true; }
+    else if(b===9){ A+=AP9[L]*(season===2?2:1); views++; } }
+  if(S.debuff>0)A*=0.88;
+  var mul=S.mul*SF[season]; if(season===1&&shrine){ mul*=1.3; notes.push('夏祭りでにぎわいました。'); } if(season===0&&parks)notes.push('庭園の桜が見ごろでした。'); if(season===2&&views)notes.push('展望台からの紅葉が人気でした。'); if(season===3&&baths)notes.push('雪見の外湯が人気でした。');
+  var D=A*K*S.rep*mul*(det?1:0.92+Math.random()*0.16), stay=Math.min(D,innCap), day=Math.min((D-stay)*0.5,12+A*0.4), g=stay+day;
+  var needF=stay+day*0.6, needG=g*0.6, needP=g*0.4, sf=Math.min(needF,eat), sg=Math.min(needG,gift), sp=Math.min(needP,fun);
+  var iInn=innCap?stay*innVal/innCap:0, iEat=sf*3, iGift=gift?sg*giftVal/gift:0, iFun=fun?sp*funVal/fun:0, iBath=Math.min(g,bathCap)*1.5, inc=iInn+iEat+iGift+iFun+iBath;
+  var rF=needF>0.5?sf/needF:1, rG=needG>0.5?sg/needG:1, rP=needP>0.5?sp/needP:1, sat=0.45*rF+0.3*rG+0.25*rP;
+  return {A:A,D:D,stay:stay,day:day,g:g,innCap:innCap,inc:inc,keep:keep,net:inc-keep,iInn:iInn,iEat:iEat,iGift:iGift,iFun:iFun,iBath:iBath,rF:rF,rG:rG,rP:rP,sat:sat,notes:notes,turned:Math.max(0,D-innCap)}; }
+function season(){ return G.turn%4; }
+function fore(S){ return stat(S||G,season(),true); }
+
+/* ---------- 建てる・増築する ---------- */
+function canBuild(S,i,b){ var d=B[b]; if(S.map[i]!==0||S.b[i])return '建てられない場所です'; if(S.rank<d.rank)return '番付が「'+RANKS[d.rank]+'」になると建てられます'; if(d.need&&!hasT(S,i,d.need))return d.need===3?'源泉のとなりにしか建てられません':'山のとなりにしか建てられません'; if(d.max&&total(S,b)>=d.max)return 'もう建っています'; if(S.money<d.cost)return 'お金が足りません'; return ''; }
+function upCost(S,i){ return Math.round(B[S.b[i]].cost*S.lv[i]*1.2); }
+function canUp(S,i){ var L=S.lv[i]; if(L>=MAXLV)return 'これ以上は増築できません'; if(S.rank<LVRANK[L+1])return '番付が「'+RANKS[LVRANK[L+1]]+'」になると増築できます'; if(S.money<upCost(S,i))return 'お金が足りません'; return ''; }
+function build(i,b){ if(canBuild(G,i,b))return false; G.money-=B[b].cost; G.b[i]=b; G.lv[i]=1; sBuild(); store(); return true; }
+function upgrade(i){ if(canUp(G,i))return false; G.money-=upCost(G,i); G.lv[i]++; sBuild(); store(); return true; }
+function trial(fn){ var bb=G.b.slice(), ll=G.lv.slice(), a=fore(); fn(); var r=fore(); G.b=bb; G.lv=ll; return {dg:r.g-a.g,dn:r.net-a.net,ds:r.sat-a.sat}; }
+function gain(t){ var s='客 '+(t.dg>=0?'+':'')+Math.round(t.dg)+'人　もうけ '+(t.dn>=0?'+':'')+Math.round(t.dn)+'両'; if(Math.abs(t.ds)>0.02)s+='　満足 '+(t.ds>0?'↑':'↓'); return s; }
+
+/* ---------- 番頭さんの一言 ---------- */
+function advice(){ var f=fore(); if(!total(G,1))return '番頭：まずは宿を建てましょう。源泉（♨）や川のとなりがおすすめです。';
+  if(f.rF<0.8)return '番頭：食事どころが足りません。お客が腹をすかせて帰っています。食堂を建てるか増築しましょう。';
+  if(f.turned>f.innCap*0.2+4)return '番頭：部屋が足りず、'+Math.round(f.turned)+'人ほど泊まれずにいます。宿を建てるか増築しましょう。';
+  if(f.rG<0.7)return '番頭：おみやげを買う店が足りません。土産屋を増やしましょう。';
+  if(f.rP<0.6&&G.rank>=2)return '番頭：お客が「遊ぶ所がない」と言っています。射的屋を建てましょう。';
+  if(f.innCap>f.D*1.25)return '番頭：部屋が余っています。足湯・庭園・外湯など、人気の上がる建物を増やしましょう。';
+  if(f.net<0)return '番頭：維持費のほうが多く、赤字です。かせげる店を増やしましょう。';
+  return '番頭：順調です。お金がたまったら、増築や人気の上がる建物を。'; }
+
+/* ---------- 画面 ---------- */
+function repStars(r){ var n=Math.max(1,Math.min(5,Math.round((r-0.6)/0.2)+1)); return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n); }
+function yearGuests(){ var h=G.hist.slice(-4), s=0; h.forEach(function(x){ s+=x; }); return s; }
+function tileHTML(i){ var m=G.map[i], b=G.b[i]; if(b)return B[b].k+'<small>'+'●●●●'.slice(0,G.lv[i])+'</small>'; return m===1?'川':(m===2?'山':(m===3?'♨':(m===4?'駅':'＋'))); }
+function tileCls(i){ var m=G.map[i], b=G.b[i], c='t '; if(b)c+='b'+b; else c+=m===1?'river':(m===2?'mount':(m===3?'spring':(m===4?'sta':'lot'))); if(i===sel)c+=' sel'; if(i===G.closed)c+=' closed'; return c; }
+function render(){ var g=$('grid'), i; if(g.children.length!==N){ g.innerHTML=''; for(i=0;i<N;i++){ var bt=document.createElement('button'); bt.onclick=(function(k){ return function(){ sel=sel===k?-1:k; render(); }; })(i); g.appendChild(bt); } }
+  for(i=0;i<N;i++){ g.children[i].className=tileCls(i); g.children[i].innerHTML=tileHTML(i); }
+  $('hTime').textContent=(Math.floor(G.turn/4)+1)+'年目 '+SEAS[season()]; $('hMoney').textContent=Math.round(G.money)+' 両'; $('hRep').textContent=repStars(G.rep); $('hRank').textContent=RANKS[G.rank];
+  var f=fore(); $('fore').innerHTML='今季の見こみ：客 <b>約'+Math.round(f.g)+'人</b>　もうけ <b>約'+Math.round(f.net)+'両</b><br><span class="note">1年の客 '+Math.round(yearGuests())+'人'+(G.rank<9?'（「'+RANKS[G.rank+1]+'」まで '+RTH[G.rank+1]+'人）':'')+'</span>';
+  $('adv').textContent=advice(); sheet(); }
+function sheet(){ var s=$('sheet'), i=sel; s.innerHTML=''; function add(tag,txt,cls){ var e=document.createElement(tag); e.textContent=txt; if(cls)e.className=cls; s.appendChild(e); return e; }
+  if(i<0){ add('h3','マスをタッチしてください'); add('p','「＋」の空き地には建物を建てられます。建物をタッチすると増築できます。'); return; }
+  var m=G.map[i], b=G.b[i];
+  if(b){ var d=B[b], L=G.lv[i]; add('h3',d.n+'（'+L+'段目）'+(i===G.closed?'　休業中':'')); add('p',d.d);
+    var why=canUp(G,i), bt=document.createElement('button'); bt.className='opt';
+    if(L>=MAXLV)bt.innerHTML='<span class="n">増築はここまで</span>'; else { var t=trial(function(){ G.lv[i]++; }); bt.innerHTML='<span class="n">増築する　'+upCost(G,i)+'両</span><span class="f'+(t.dn<0?' neg':'')+'">'+gain(t)+'</span>'+(why?'<span class="lock">'+why+'</span>':''); }
+    bt.disabled=!!why; bt.onclick=function(){ if(upgrade(i))render(); }; s.appendChild(bt);
+    var rm=document.createElement('button'); rm.className='opt'; rm.innerHTML='<span class="d">取りこわす（お金は戻りません）</span>'; rm.onclick=function(){ if(rm.dataset.ok){ G.b[i]=0; G.lv[i]=0; store(); render(); } else { rm.dataset.ok='1'; rm.innerHTML='<span class="lock">もう一度押すと取りこわします</span>'; } }; s.appendChild(rm); return; }
+  if(m!==0){ add('h3',m===1?'川':(m===2?'山':(m===3?'源泉':'駅'))); add('p',m===1?'建物は建てられません。川のとなりの宿と足湯は人気が上がります。':(m===2?'建物は建てられません。山のとなりには展望台が建てられます。':(m===3?'お湯がわく場所です。となりの宿と足湯は人気が上がり、外湯はここのとなりにだけ建てられます。':'お客が着く場所です。となりの土産屋はよく売れます。'))); return; }
+  add('h3','ここに建てる'); var k;
+  for(k=1;k<B.length;k++){ (function(k){ var d=B[k], why=canBuild(G,i,k), bt=document.createElement('button'), t=trial(function(){ G.b[i]=k; G.lv[i]=1; }); bt.className='opt';
+    bt.innerHTML='<span class="n">'+d.n+'　'+d.cost+'両</span><span class="d">'+d.d+'</span>'+(G.rank>=d.rank&&!(d.need&&!hasT(G,i,d.need))?'<span class="f'+(t.dn<0?' neg':'')+'">ここに建てると：'+gain(t)+'</span>':'')+(why?'<span class="lock">'+why+'</span>':'');
+    bt.disabled=!!why; bt.onclick=function(){ if(build(i,k))render(); }; s.appendChild(bt); })(k); } }
+
+/* ---------- 出来事 ---------- */
+function pickEvent(f){ var se=season(), L=[], i, blds=[]; for(i=0;i<N;i++)if(G.b[i])blds.push(i);
+  L.push({t:'テレビ局が取材に来ました。次の季節はお客が増えそうです。',o:[['宴でもてなす（−150両）',function(){ G.money-=150; G.mul=1.4; }],['いつもどおり迎える',function(){ G.mul=1.15; }]]});
+  L.push({t:'常連のお客さまから「街のために」と寄付をいただきました。（+200両）',o:[['ありがたく受け取る',function(){ G.money+=200; }]]});
+  if(f.innCap>=40)L.push({t:'団体客の予約が入りました。次の季節はお客が増えます。',o:[['歓迎する',function(){ G.mul=1.3; }]]}); else L.push({t:'団体客の問い合わせがありましたが、部屋が足りず断りました。（宿の部屋が合わせて40人ぶん以上あれば受けられます）',o:[['わかった',function(){}]]});
+  if(total(G,4)>=2)L.push({t:'雑誌の「足湯めぐり」特集に載りました。評判が上がります。',o:[['よかった',function(){ G.rep=Math.min(1.6,G.rep+0.08); }]]}); else L.push({t:'雑誌が「足湯めぐり」の特集を組むそうです。（足湯が2つ以上あれば載れました）',o:[['わかった',function(){}]]});
+  if((se===1||se===2)&&blds.length){ var k=blds[Math.floor(Math.random()*blds.length)], c=Math.round(B[G.b[k]].cost*0.3); L.push({t:'台風で「'+B[G.b[k]].n+'」がこわれました。',o:[['急いで直す（−'+c+'両）',function(){ G.money-=c; }],['次の季節は休業にする',function(){ G.closed=k; }]]}); }
+  if(se===2){ if(total(G,7))L.push({t:'この冬は大雪の予報。雪見の外湯が話題になりそうです。',o:[['楽しみだ',function(){ G.mul=1.2; }]]}); else L.push({t:'この冬は大雪の予報。客足が遠のきそうです。（外湯があれば雪見風呂が売りになります）',o:[['しかたない',function(){ G.mul=0.85; }]]}); }
+  if(G.turn>=8&&G.debuff<=0)L.push({t:'源泉の湯量が減ってきました。',o:[['掘り直す（−300両）',function(){ G.money-=300; }],['様子を見る（1年間、人気が少し下がる）',function(){ G.debuff=4; }]]});
+  if(se===0&&!total(G,8)&&G.rank>=4&&!G.seen.sh){ G.seen.sh=1; return {t:'町の人が「神社があれば、夏祭りが開けるのに」と話しています。',o:[['覚えておく',function(){}]]}; }
+  return L[Math.floor(Math.random()*L.length)]; }
+
+/* ---------- 季節を進める ---------- */
+function advance(){ var se=season(), r=stat(G,se,false), i, was=G.rank, ev=null; G.money+=r.net; G.rep=Math.max(0.6,Math.min(1.6,G.rep+(r.sat-0.72)*0.22)); G.hist.push(r.g); G.mul=1; G.closed=-1; if(G.debuff>0)G.debuff--;
+  var yg=yearGuests(); for(i=9;i>G.rank;i--)if(yg>=RTH[i]){ G.rank=i; break; }
+  G.turn++; if(Math.random()<0.5)ev=pickEvent(r); var end=G.turn===40&&!G.ended;
+  if(auto){ if(ev)ev.o[0][1](); if(end)G.ended=true; return r; }
+  r.net>=0?sCoin():sBad(); if(G.rank>was)sUp();
+  $('rTitle').textContent=(Math.floor((G.turn-1)/4)+1)+'年目 '+SEAS[se]+' の結果';
+  function row(a,b,c){ return '<tr><td>'+a+'</td><td class="'+(c||'')+'">'+b+'</td></tr>'; }
+  $('rTable').innerHTML=row('泊まり客',Math.round(r.stay)+'人')+row('日帰り客',Math.round(r.day)+'人')+row('宿の売上','+'+Math.round(r.iInn)+'両')+row('食堂の売上','+'+Math.round(r.iEat)+'両')+row('土産屋の売上','+'+Math.round(r.iGift)+'両')+(r.iFun?row('射的屋の売上','+'+Math.round(r.iFun)+'両'):'')+(r.iBath?row('外湯の売上','+'+Math.round(r.iBath)+'両'):'')+row('維持費','−'+Math.round(r.keep)+'両','neg')+row('<b>もうけ</b>',(r.net>=0?'+':'−')+Math.abs(Math.round(r.net))+'両',r.net>=0?'pos':'neg')+row('所持金',Math.round(G.money)+'両');
+  var n=r.notes.slice(); if(r.rF<0.8)n.push('食事どころが足りず、不満の声が出ました。'); if(r.turned>r.innCap*0.2+4)n.push('部屋が足りず、'+Math.round(r.turned)+'人ほどが泊まれませんでした。'); if(r.rG<0.7)n.push('おみやげを買えなかったお客がいました。'); if(r.rP<0.6&&G.rank>=2)n.push('「遊ぶ所がない」という声がありました。');
+  n.push(r.sat>=0.85?'お客の満足は高く、評判が上がりました。':(r.sat>=0.72?'お客はおおむね満足しています。':'満足が低く、評判が下がりました。'));
+  if(G.rank>was){ var un=[]; for(i=1;i<B.length;i++)if(B[i].rank>was&&B[i].rank<=G.rank)un.push(B[i].n); n.push('<b>番付が「'+RANKS[G.rank]+'」に上がりました！</b>'+(un.length?'　新しく建てられる：'+un.join('・'):'')+((LVRANK[2]>was&&LVRANK[2]<=G.rank)?'　増築（2段目）ができるようになりました。':'')+((LVRANK[3]>was&&LVRANK[3]<=G.rank)?'　増築（3段目）ができるようになりました。':'')+((LVRANK[4]>was&&LVRANK[4]<=G.rank)?'　増築（4段目）ができるようになりました。':'')); }
+  if(G.money<0)n.push('<span class="neg">所持金が赤字です。もうけが出るまで新しい建物は建てられません。</span>');
+  $('rNotes').innerHTML=n.join('<br>');
+  var eb=$('rEvent'), bs=$('rBtns'); bs.innerHTML=''; function close(){ $('ovRes').hidden=true; store(); if(end){ G.ended=true; store(); showEnd(); } else render(); }
+  if(ev){ eb.hidden=false; eb.innerHTML='<b>出来事</b><br>'+ev.t; ev.o.forEach(function(o){ var b=document.createElement('button'); b.textContent=o[0]; b.className='main'; b.onclick=function(){ o[1](); close(); }; bs.appendChild(b); }); }
+  else { eb.hidden=true; var b=document.createElement('button'); b.textContent='つぎへ'; b.className='main'; b.onclick=close; bs.appendChild(b); }
+  $('ovRes').hidden=false; $('ovRes').scrollTop=0; return r; }
+function showEnd(){ var yg=Math.round(yearGuests()); $('eRank').textContent=RANKS[G.rank]; $('eMsg').textContent=(G.rank>=9?'みごと横綱の温泉地になりました！':(G.rank>=7?'あと一歩で横綱でした。建てる場所の組み合わせを工夫してみましょう。':'次はもっと上を目指しましょう。番頭さんの一言が手がかりです。'))+'　（1年の客 '+yg+'人）';
+  if(!best||G.rank>best.rank||(G.rank===best.rank&&yg>best.yg)){ best={rank:G.rank,yg:yg}; try{ localStorage.setItem(KEY+'_best',JSON.stringify(best)); }catch(e){} } if(G.rank>=9)sUp(); $('ovEnd').hidden=false; }
+function menu(){ var o=load(); $('bCont').hidden=!o; $('bestTxt').textContent=best?('これまでの最高：'+RANKS[best.rank]+'（1年の客 '+best.yg+'人）'):''; $('ovMenu').hidden=false; }
+$('bNext').onclick=function(){ sel=-1; advance(); };
+$('bMenu').onclick=menu;
+$('bCont').onclick=function(){ G=load(); sel=-1; $('ovMenu').hidden=true; render(); };
+var newArm=false; $('bNew').onclick=function(){ if(load()&&!newArm){ newArm=true; this.textContent='今の街を消して始める（もう一度押す）'; return; } newArm=false; this.textContent='新しく始める'; newGame(); $('ovMenu').hidden=true; render(); };
+$('bFree').onclick=function(){ $('ovEnd').hidden=true; render(); };
+$('bEndNew').onclick=function(){ newGame(); $('ovEnd').hidden=true; render(); };
+
+/* ---------- 点検用：自動で街を作らせて、10年後の番付を見る ---------- */
+function botTurn(smart){ var guard=0; while(guard++<30){ var bestV=0, act=null, i, k, t, c, v;
+    for(i=0;i<N;i++){ if(G.b[i]){ if(!canUp(G,i)){ c=upCost(G,i); t=trial(function(){ G.lv[i]++; }); v=(t.dn*7+t.dg*4+t.ds*250)/c; if(v>bestV){ bestV=v; act=[i,0]; } } }
+      else if(G.map[i]===0){ for(k=1;k<B.length;k++){ if(canBuild(G,i,k))continue; c=B[k].cost; t=trial(function(){ G.b[i]=k; G.lv[i]=1; }); v=(t.dn*7+t.dg*4+t.ds*250)/c; if(!smart)v=Math.random(); if(v>bestV){ bestV=v; act=[i,k]; } } } }
+    if(!act||bestV<=0.02)break; if(act[1])build(act[0],act[1]); else upgrade(act[0]); } }
+window.__o={sim:function(smart){ auto=true; newGame(); var ranks=[]; while(G.turn<40){ botTurn(smart!==false); advance(); if(G.turn%4===0)ranks.push(G.rank); } var r={rank:RANKS[G.rank],yg:Math.round(yearGuests()),money:Math.round(G.money),rep:G.rep.toFixed(2),byYear:ranks.join('')}; auto=false; return r; },G:function(){return G;},newGame:newGame,render:render,bot:botTurn,adv:advance,fore:fore};
+
+setSnd(); G=load(); if(!G){ auto=true; newGame(); auto=false; } render(); menu();
+})();
+</script>
+<script>
+(function(){ var host=document.getElementById('ovMenu'); if(!host)return; var box=host.querySelector('.in')||host;
+  var a=document.createElement('a'); a.href='./'; a.textContent='← ゲーム一覧へもどる';
+  a.style.cssText='display:block;margin:10px auto 0;padding:10px 14px;max-width:440px;text-align:center;border:1px solid rgba(255,255,255,.28);border-radius:10px;color:inherit;text-decoration:none;font-size:14px;opacity:.85';
+  box.appendChild(a);
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); } })();
+</script></body></html>
